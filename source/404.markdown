@@ -1,0 +1,10 @@
+---
+layout: page
+title: Page Not Found
+keywords: ""
+description: ""
+---
+
+Oops, 该页面不存在。
+
+请尝试右上角搜索框，或浏览 [博客归档页面](/blog/archives)。
