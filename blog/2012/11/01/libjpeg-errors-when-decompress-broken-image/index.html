@@ -1,0 +1,587 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>小议libjpeg解压损坏文件时的错误处理 - 技术男儿裆自强</title>
+  <meta name="author" content="wenbin wang">
+
+  
+  <meta name="description" content="libjpeg解压损坏文件时，可能的一些错误与处理方法。通过错误处理、jpeg_finish_decompress()函数、调用jpeg_destroy_decompress()之前是否有必要调用jpeg_finish_decompress()三个问题展开讨论。">
+  <meta name="keywords" content="C, C++, libjpeg, 损坏, 解压, 读取, 错误, jpeg_finish_decompress, jpeg_destroy_decompress">
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="技术男儿裆自强" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35757346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">技术男儿裆自强</a></h1>
+  
+    <h2>哭天喊地，跺脚骂娘，技术男儿裆自强</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:geeksavetheworld.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">小议libjpeg解压损坏文件时的错误处理</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-01T22:48:00+08:00" pubdate data-updated="true">Nov 1<span>st</span>, 2012</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>本文主要介绍libjpeg解压损坏文件时，可能的一些错误与处理方法。libjpeg的常规使用请参阅文档或其他文章。</p>
+
+<h2>问题1：错误处理</h2>
+
+<p>使用libjpeg解压文件时难免产生错误，原因可能是图片文件损坏、io错误、内存不足等等。
+默认的错误处理函数会调用exit()函数，导致整个进程结束，这对用户来说是非常不友好的。我们需要注册自定义错误处理函数，改变此行为。</p>
+
+<p>libjpeg采用c语言的setjmp/longjmp机制实现错误处理，首先需要包含以下头文件：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;setjmp.h&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>定义错误处理结构体：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">my_error_mgr</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">jpeg_error_mgr</span> <span class="n">pub</span><span class="p">;</span>  <span class="cm">/* &quot;public&quot; fields */</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">jmp_buf</span> <span class="n">setjmp_buffer</span><span class="p">;</span>    <span class="cm">/* for return to caller */</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="n">my_error_mgr</span> <span class="o">*</span> <span class="n">my_error_ptr</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>实现错误处理函数：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">METHODDEF</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="n">my_error_exit</span> <span class="p">(</span><span class="n">j_common_ptr</span> <span class="n">cinfo</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="cm">/* cinfo-&gt;err really points to a my_error_mgr struct, so coerce pointer */</span>
+</span><span class='line'>  <span class="n">my_error_ptr</span> <span class="n">myerr</span> <span class="o">=</span> <span class="p">(</span><span class="n">my_error_ptr</span><span class="p">)</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">err</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* Always display the message. */</span>
+</span><span class='line'>  <span class="cm">/* We could postpone this until after returning, if we chose. */</span>
+</span><span class='line'>  <span class="p">(</span><span class="o">*</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">err</span><span class="o">-&gt;</span><span class="n">output_message</span><span class="p">)</span> <span class="p">(</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* Return control to the setjmp point */</span>
+</span><span class='line'>  <span class="n">longjmp</span><span class="p">(</span><span class="n">myerr</span><span class="o">-&gt;</span><span class="n">setjmp_buffer</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上代码只是简单的打印错误信息，之后调用longjmp，使控制流跳转到setjmp设置的代码块。
+如果需要，还可通过cinfo->err->msg_code判断错误类型，进行进一步处理。</p>
+
+<!-- more -->
+
+
+<p>实现解压函数：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">GLOBAL</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span>
+</span><span class='line'><span class="n">read_JPEG_file</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span> <span class="n">filename</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">jpeg_decompress_struct</span> <span class="n">cinfo</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">my_error_mgr</span> <span class="n">jerr</span><span class="p">;</span>
+</span><span class='line'>  <span class="cm">/* More stuff */</span>
+</span><span class='line'>  <span class="kt">FILE</span> <span class="o">*</span> <span class="n">infile</span><span class="p">;</span>     <span class="cm">/* source file */</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* In this example we want to open the input file before doing anything else,</span>
+</span><span class='line'><span class="cm">   * so that the setjmp() error recovery below can assume the file is open.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">((</span><span class="n">infile</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;can&#39;t open %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* We set up the normal JPEG error routines, then override error_exit. */</span>
+</span><span class='line'>  <span class="n">cinfo</span><span class="p">.</span><span class="n">err</span> <span class="o">=</span> <span class="n">jpeg_std_error</span><span class="p">(</span><span class="o">&amp;</span><span class="n">jerr</span><span class="p">.</span><span class="n">pub</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">jerr</span><span class="p">.</span><span class="n">pub</span><span class="p">.</span><span class="n">error_exit</span> <span class="o">=</span> <span class="n">my_error_exit</span><span class="p">;</span>
+</span><span class='line'>  <span class="cm">/* Establish the setjmp return context for my_error_exit to use. */</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span><span class="n">setjmp</span><span class="p">(</span><span class="n">jerr</span><span class="p">.</span><span class="n">setjmp_buffer</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* If we get here, the JPEG code has signaled an error.</span>
+</span><span class='line'><span class="cm">     * We need to clean up the JPEG object, close the input file, and return.</span>
+</span><span class='line'><span class="cm">     */</span>
+</span><span class='line'>    <span class="n">jpeg_destroy_decompress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">fclose</span><span class="p">(</span><span class="n">infile</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* ...</span>
+</span><span class='line'><span class="cm">   * 读取数据</span>
+</span><span class='line'><span class="cm">   * ...</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* This is an important step since it will release a good deal of memory. */</span>
+</span><span class='line'>  <span class="n">jpeg_destroy_decompress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="cm">/* After finish_decompress, we can close the input file.</span>
+</span><span class='line'><span class="cm">   * Here we postpone it until after no more JPEG errors are possible,</span>
+</span><span class='line'><span class="cm">   * so as to simplify the setjmp error logic above.</span>
+</span><span class='line'><span class="cm">   */</span>
+</span><span class='line'>  <span class="n">fclose</span><span class="p">(</span><span class="n">infile</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上代码重点在于，注册my_error_exit回调函数，之后调用setjmp函数设置返回代码块。
+发生错误时，回调my_error_exit函数，在my_error_exit函数末尾，控制流跳转到setjmp设置的代码块，在此代码块完成释放资源等操作。
+这样，即使发生错误，也不至于进程退出，造成用户困扰。</p>
+
+<h2>问题2：关于jpeg_finish_decompress()函数</h2>
+
+<p>网上几乎所有使用libjpeg解压图片的代码，在解压完成后都会调用以下代码：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/* Finish decompression */</span>
+</span><span class='line'><span class="n">jpeg_finish_decompress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'><span class="cm">/* Release JPEG decompression object */</span>
+</span><span class='line'><span class="n">jpeg_destroy_decompress</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cinfo</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中，jpeg_finish_decompress()函数的作用为：</p>
+
+<ul>
+<li>检查jpeg对象状态是否正常，并将其设为解压完成状态</li>
+<li>读取输入数据源中剩余数据，直至EOI标记（0xFF,0xD9，标记jpeg图片结束）</li>
+<li>释放jpeg对象分配的工作内存</li>
+</ul>
+
+
+<p>实现如下：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">GLOBAL</span><span class="p">(</span><span class="n">boolean</span><span class="p">)</span>
+</span><span class='line'><span class="n">jpeg_finish_decompress</span> <span class="p">(</span><span class="n">j_decompress_ptr</span> <span class="n">cinfo</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">((</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">==</span> <span class="n">DSTATE_SCANNING</span> <span class="o">||</span>
+</span><span class='line'>       <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">==</span> <span class="n">DSTATE_RAW_OK</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">buffered_image</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* Terminate final pass of non-buffered mode */</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">output_scanline</span> <span class="o">&lt;</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">output_height</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">ERREXIT</span><span class="p">(</span><span class="n">cinfo</span><span class="p">,</span> <span class="n">JERR_TOO_LITTLE_DATA</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">(</span><span class="o">*</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">master</span><span class="o">-&gt;</span><span class="n">finish_output_pass</span><span class="p">)</span> <span class="p">(</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">=</span> <span class="n">DSTATE_STOPPING</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">==</span> <span class="n">DSTATE_BUFIMAGE</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* Finishing after a buffered-image operation */</span>
+</span><span class='line'>    <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">=</span> <span class="n">DSTATE_STOPPING</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span> <span class="o">!=</span> <span class="n">DSTATE_STOPPING</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* STOPPING = repeat call after a suspension, anything else is error */</span>
+</span><span class='line'>    <span class="n">ERREXIT1</span><span class="p">(</span><span class="n">cinfo</span><span class="p">,</span> <span class="n">JERR_BAD_STATE</span><span class="p">,</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">global_state</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="cm">/* Read until EOI */</span>
+</span><span class='line'>  <span class="k">while</span> <span class="p">(</span><span class="o">!</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">inputctl</span><span class="o">-&gt;</span><span class="n">eoi_reached</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">((</span><span class="o">*</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">inputctl</span><span class="o">-&gt;</span><span class="n">consume_input</span><span class="p">)</span> <span class="p">(</span><span class="n">cinfo</span><span class="p">)</span> <span class="o">==</span> <span class="n">JPEG_SUSPENDED</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">FALSE</span><span class="p">;</span>      <span class="cm">/* Suspend, come back later */</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="cm">/* Do final cleanup */</span>
+</span><span class='line'>  <span class="p">(</span><span class="o">*</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">src</span><span class="o">-&gt;</span><span class="n">term_source</span><span class="p">)</span> <span class="p">(</span><span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>  <span class="cm">/* We can use jpeg_abort to release memory and reset global_state */</span>
+</span><span class='line'>  <span class="n">jpeg_abort</span><span class="p">((</span><span class="n">j_common_ptr</span><span class="p">)</span> <span class="n">cinfo</span><span class="p">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">TRUE</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>从以上代码可以看到，jpeg_finish_decompress()函数是利用jpeg_abort()函数进行释放工作内存操作的。</p>
+
+<p>解压损坏图片时，即使在调用jpeg_finish_decompress()之前的解压过程完全正常，调用jpeg_finish_decompress()时仍可能产生错误。
+错误原因可能数据源结构损坏，导致丢失EOI标记，或有多个SOI标记等。
+例如，解压下图时，调用jpeg_finish_decompress()之前完全正常，但调用jpeg_finish_decompress()时会产生错误：
+<em>Invalid JPEG file structure: two SOI markers</em></p>
+
+<p><img src="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg"></p>
+
+<p>直觉上，如果在调用jpeg_finish_decompress()之前未发生错误，则直接利用所读取的图片数据用于显示等操作即可，
+不必理会jpeg_finish_decompress()中可能产生的错误，进一步，甚至可能不必调用jpeg_finish_decompress()函数。
+由此引出下一个问题：</p>
+
+<h2>问题3：调用jpeg_destroy_decompress()之前是否有必要调用jpeg_finish_decompress()？</h2>
+
+<p>由上文所述，调用jpeg_finish_decompress()的目的为：</p>
+
+<ol>
+<li>检查jpeg对象状态是否正常，并将其设为解压完成状态</li>
+<li>读取输入数据源中剩余数据，直至EOI标记（0xFF,0xD9，标记jpeg图片结束）</li>
+<li>释放jpeg对象分配的工作内存</li>
+</ol>
+
+
+<p>对于目的1，如果不需检测jpeg对象状态，或者不再继续使用该对象，可直接忽略。</p>
+
+<p>对于目的2，如果不需读取并消耗剩余输入数据源数据，可直接忽略。</p>
+
+<p>对于目的3，即使不调用jpeg_finish_decompress()，jpeg对象分配的工作内存也会在调用jpeg_destroy_decompress()时被释放，不会造成内存泄露。
+此外，如果还要继续使用jpeg对象，也可调用jpeg_abort()函数进行释放工作内存操作。</p>
+
+<p>可简单做出如下结论：</p>
+
+<ul>
+<li>如果只需得到解压数据，不再使用jpeg对象，则完全可以不必调用jpeg_finish_decompress()函数，直接调用jpeg_destroy_decompress()函数释放内存即可。</li>
+<li>如果还需使用jpeg对象，但不在意对象状态，且忽略输入数据源剩余数据，可用jpeg_abort()代替jpeg_finish_decompress()，达到释放工作内存的目的。</li>
+<li>如需检查jpeg对象状态，或者需要读取并消耗剩余输入数据源数据，则需调用jpeg_finish_decompress()函数。
+此时需要注意jpeg_finish_decompress()可能产生的错误。</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">wenbin wang</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-01T22:48:00+08:00" pubdate data-updated="true">Nov 1<span>st</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/c-slash-c-plus-plus/'>C/C++</a>, <a class='category' href='/blog/categories/libjpeg/'>libjpeg</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+    <!-- JiaThis Button BEGIN -->
+    <div class="jiathis_style">
+      <span class="jiathis_txt">分享到：</span>
+      <a class="jiathis_button_tsina">新浪微博</a>
+      <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_renren">人人网</a>
+      <a class="jiathis_button_qzone">QQ空间</a>
+      <a class="jiathis_button_tqq">腾讯微博</a>
+      <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+      <a class="jiathis_counter_style"></a>
+    </div>
+    <script type="text/javascript" src="http://v2.jiathis.com/code/jia.js?uid=1704686" charset="utf-8"></script>
+    <!-- JiaThis Button END -->
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/11/02/macvim-cpu-stuck/" title="Next Post: MacVim处理中文时卡顿、CPU占用过高问题">MacVim处理中文时卡顿、CPU占用过高问题 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/c-c-'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg'>libjpeg (1)</a></li><li><a href='/blog/categories/linux'>linux (1)</a></li><li><a href='/blog/categories/mac'>mac (1)</a></li><li><a href='/blog/categories/octopress'>Octopress (1)</a></li><li><a href='/blog/categories/vim'>vim (1)</a></li></ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">向Octopress添加JiaThis分享工具及冲突解决</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/02/macvim-cpu-stuck/">MacVim处理中文时卡顿、CPU占用过高问题</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">小议libjpeg解压损坏文件时的错误处理</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>About Me</h1>
+  <p>wenbin wang，清华大学航天航空学院博士生，编程爱好者。</p>
+  <p>自学编程若干年，擅长C/C++，对GUI、图形、数据库等均有涉猎。利用Qt、OSG、cocos2d-x等完成过多个大型项目。</p>
+  <p>联系方式: wenbin1989 at gmail dot com，欢迎交流讨论。</p>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/wenbin1989">@wenbin1989</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'wenbin1989',
+            count: 2,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - wenbin wang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'geeksavetheworld';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/';
+        var disqus_url = 'http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

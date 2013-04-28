@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://geeksavetheworld.com/sitemap.xml 

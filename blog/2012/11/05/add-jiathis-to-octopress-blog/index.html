@@ -5,14 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>技术男儿裆自强</title>
+  <title>向Octopress添加JiaThis分享工具及冲突解决 - 技术男儿裆自强</title>
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="当系统有多块硬盘时，通过组建raid以提升磁盘性能或提供磁盘冗余，往往成为人们的首选考量。
-当今主流raid实现方案大致可分为三种： 硬件raid(hardware raid)，通过购买昂贵的raid卡实现，我等平民不考虑。
-软件raid(software raid)，通过操作系统内软件创建阵列， &hellip;">
-  
+  <meta name="description" content="Octopress默认集成twitter、google +1、facebook like等分享工具。添加对JiaThis的支持，JiaThis与Octopress的Video模块有一点小冲突，会导致分享工具条左下角被一个小白框遮盖。解决JiaThis与Octopress冲突。">
+  <meta name="keywords" content="Octopress, JiaThis, 冲突, 分享, share, sharing, 框, 小白框, 小框, flash框, flash-video">
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
@@ -20,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://geeksavetheworld.com">
+  <link rel="canonical" href="http://geeksavetheworld.com/blog/2012/11/05/add-jiathis-to-octopress-blog">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="技术男儿裆自强" type="application/atom+xml">
@@ -79,121 +77,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Linux之主板raid(fake Raid): Dmraid or Mdadm</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>当系统有多块硬盘时，通过组建<a href="http://en.wikipedia.org/wiki/RAID">raid</a>以提升磁盘性能或提供磁盘冗余，往往成为人们的首选考量。
-当今主流raid实现方案大致可分为三种：</p>
-
-<ul>
-<li>硬件raid(hardware raid)，通过购买昂贵的raid卡实现，我等平民不考虑。</li>
-<li>软件raid(software raid)，通过操作系统内软件创建阵列，raid处理开销由CPU负责。</li>
-<li>主板raid(fake raid)，通过主板内建raid控制器创建阵列，由操作系统驱动识别。</li>
-</ul>
-
-
-<p>需要注意的是，fake raid仅提供廉价的控制器，raid处理开销仍由CPU负责，因此性能与CPU占用基本与software raid持平。
-如果只有单个linux系统，使用software raid一般比fake raid更健壮，但是，在多启动环境中(例如windows与linux双系统)，为了使各个系统都能正确操作相同的raid分区，就必须使用fake raid了。
-可参考<a href="https://help.ubuntu.com/community/FakeRaidHowto">FakeRaidHowto @ Community Ubuntu Documentation</a>以获得更多相关信息。</p>
-
-<p>linux下最重要的raid管理程序为<a href="http://linux.die.net/man/8/dmraid">dmraid</a>与<a href="http://linux.die.net/man/8/mdadm">mdadm</a>。
-本人印象中，前者用于识别rake raid，后者用于管理software raid，但最近更新系统时突然发现，openSUSE及rhel等发行版都改用mdadm替代dmraid来处理rake raid。
-放狗搜索一番后，发现大家都有相似的疑问，便想到简单考察总结一番，对linux下rake raid应该使用dmraid还是mdadm进行管理做一个评判。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">继续阅读 &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-09T19:54:00+08:00" pubdate data-updated="true">Nov 9<span>th</span>, 2012</time>
-        
-         | <a href="/blog/2012/11/09/chartboost-x-new-released/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
-
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
-
-<p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
-最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
-
-<p><a href="https://github.com/wenbin1989/Chartboost-x">Chartboost-x GitHub页</a></p>
-
-<p>该封装基本覆盖了Chartboost SDK的所有接口，实现了包括Delegate等功能，运行良好，使用简单。如果您碰巧也使用cocos2d-x，碰巧也需要Chartboost，那一定要clone下来看看，或许能节省您不少宝贵时间。</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">向Octopress添加JiaThis分享工具及冲突解决</a></h1>
+      <h1 class="entry-title">向Octopress添加JiaThis分享工具及冲突解决</h1>
     
     
       <p class="meta">
@@ -211,14 +100,14 @@
 
 <time datetime="2012-11-05T19:08:00+08:00" pubdate data-updated="true">Nov 5<span>th</span>, 2012</time>
         
-         | <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/#disqus_thread">Comments</a>
+         | <a href="#disqus_thread">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Octopress默认集成twitter、google +1、facebook like等分享工具，只需补全配置文件<code>_config.yml</code>中的相关信息即可。</p>
+<div class="entry-content"><p>Octopress默认集成twitter、google +1、facebook like等分享工具，只需补全配置文件<code>_config.yml</code>中的相关信息即可。</p>
 
 <p>但是，但是，作为水深火热的墙内人民，这些工具大部分状况下都处于瘫痪状态，甚至会拖慢整个站点的加载速度。
 权衡起见，只得在<code>_config.yml</code>中注释掉twitter、google +1、facebook like相关选项，
@@ -278,137 +167,13 @@
 
 <p>其中2到14行为从<a href="http://www.jiathis.com/">http://www.jiathis.com/</a>获取的分享代码，可自行定制。</p>
 
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">继续阅读 &rarr;</a>
-    </footer>
-  
+<!-- more -->
 
 
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/02/macvim-cpu-stuck/">MacVim处理中文时卡顿、CPU占用过高问题</a></h1>
-    
-    
-      <p class="meta">
-        
+<h2>3. 解决JiaThis与Octopress冲突</h2>
 
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-02T16:34:00+08:00" pubdate data-updated="true">Nov 2<span>nd</span>, 2012</time>
-        
-         | <a href="/blog/2012/11/02/macvim-cpu-stuck/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>问题出现在<a href="https://github.com/downloads/b4winckler/macvim/MacVim-snapshot-65.tbz">MacVim-snapshot-65</a>版本</p>
-
-<p>本人一般用MacVim编辑文档。近期发现编辑含有大段中文的markdown文档时，出现卡顿、MacVim进程CPU占用严重过高问题。
-google搜索无果，自行研究，过程如下：</p>
-
-<ul>
-<li>打开纯英文markdown文档，不管多长都不会出现卡顿问题。</li>
-<li>打开大段中文txt文件，未出现卡顿问题。</li>
-<li>考虑可能是语法高亮造成卡顿问题，关闭语法高亮，大段中文的markdown文档未出现卡顿问题。</li>
-</ul>
-
-
-<p>虽然关闭语法高亮可以解决卡顿问题，但是。。。这个必须得有啊！！！</p>
-
-<p>继续研究，偶然发现，在<em>Preferences</em>对话框中选择<em>Advanced</em>选项卡，去掉<em>Use Core Text renderer</em>选项的勾勾，
-则打开语法高亮后，大段中文也不会造成卡顿，至此问题解决。</p>
-
-<p>虽然去掉<em>Use Core Text renderer</em>选项后，渲染效果变差一点点，无法使用透明效果，偶尔出现残像，但总比没有语法高亮强。
-Sigh&#8230;</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">小议libjpeg解压损坏文件时的错误处理</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-01T22:48:00+08:00" pubdate data-updated="true">Nov 1<span>st</span>, 2012</time>
-        
-         | <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/#disqus_thread">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本文主要介绍libjpeg解压损坏文件时，可能的一些错误与处理方法。libjpeg的常规使用请参阅文档或其他文章。</p>
-
-<h2>问题1：错误处理</h2>
-
-<p>使用libjpeg解压文件时难免产生错误，原因可能是图片文件损坏、io错误、内存不足等等。
-默认的错误处理函数会调用exit()函数，导致整个进程结束，这对用户来说是非常不友好的。我们需要注册自定义错误处理函数，改变此行为。</p>
-
-<p>libjpeg采用c语言的setjmp/longjmp机制实现错误处理，首先需要包含以下头文件：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;setjmp.h&gt;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>定义错误处理结构体：</p>
-
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">my_error_mgr</span> <span class="p">{</span>
-</span><span class='line'>  <span class="k">struct</span> <span class="n">jpeg_error_mgr</span> <span class="n">pub</span><span class="p">;</span>  <span class="cm">/* &quot;public&quot; fields */</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="kt">jmp_buf</span> <span class="n">setjmp_buffer</span><span class="p">;</span>    <span class="cm">/* for return to caller */</span>
-</span><span class='line'><span class="p">};</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">typedef</span> <span class="k">struct</span> <span class="n">my_error_mgr</span> <span class="o">*</span> <span class="n">my_error_ptr</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>实现错误处理函数：</p>
+<p>Octopress会对所有有<code>movie</code>属性的<code>object</code>标签添加一层形如<code>&lt;div class="flash-video"&gt;&lt;div&gt;</code>的wrapper，用于视频回放。
+实现代码在<code>source/javascripts/octopress.js</code>中的<code>wrapFlashVideos()</code>函数：</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -423,42 +188,138 @@ Sigh&#8230;</p>
 <span class='line-number'>11</span>
 <span class='line-number'>12</span>
 <span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">METHODDEF</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class='line'><span class="n">my_error_exit</span> <span class="p">(</span><span class="n">j_common_ptr</span> <span class="n">cinfo</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>  <span class="cm">/* cinfo-&gt;err really points to a my_error_mgr struct, so coerce pointer */</span>
-</span><span class='line'>  <span class="n">my_error_ptr</span> <span class="n">myerr</span> <span class="o">=</span> <span class="p">(</span><span class="n">my_error_ptr</span><span class="p">)</span> <span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">err</span><span class="p">;</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="cm">/* Always display the message. */</span>
-</span><span class='line'>  <span class="cm">/* We could postpone this until after returning, if we chose. */</span>
-</span><span class='line'>  <span class="p">(</span><span class="o">*</span><span class="n">cinfo</span><span class="o">-&gt;</span><span class="n">err</span><span class="o">-&gt;</span><span class="n">output_message</span><span class="p">)</span> <span class="p">(</span><span class="n">cinfo</span><span class="p">);</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="cm">/* Return control to the setjmp point */</span>
-</span><span class='line'>  <span class="n">longjmp</span><span class="p">(</span><span class="n">myerr</span><span class="o">-&gt;</span><span class="n">setjmp_buffer</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">wrapFlashVideos</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">object</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">object</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;param[name=movie]&#39;</span><span class="p">,</span> <span class="nx">object</span><span class="p">).</span><span class="nx">length</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">wrapper</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">before</span><span class="p">(</span><span class="s1">&#39;&lt;div class=&quot;flash-video&quot;&gt;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">previous</span><span class="p">();</span>
+</span><span class='line'>      <span class="nx">$</span><span class="p">(</span><span class="nx">wrapper</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="nx">object</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;iframe[src*=vimeo],iframe[src*=youtube]&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">iframe</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">iframe</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">iframe</span><span class="p">);</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">wrapper</span> <span class="o">=</span> <span class="nx">iframe</span><span class="p">.</span><span class="nx">before</span><span class="p">(</span><span class="s1">&#39;&lt;div class=&quot;flash-video&quot;&gt;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">previous</span><span class="p">();</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="nx">wrapper</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="nx">iframe</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">});</span>
 </span><span class='line'><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<p>以上代码只是简单的打印错误信息，之后调用longjmp，使控制流跳转到setjmp设置的代码块。
-如果需要，还可通过cinfo->err->msg_code判断错误类型，进行进一步处理。</p>
+<p>这层wrapper即是形成JiaThis分享工具条左下角小白框的原因。我们需要对<code>object</code>做一个判断，过滤掉JiaThis的object。
+将<code>wrapFlashVideos()</code>函数改为以下代码即可：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='js'><span class='line'><span class="kd">function</span> <span class="nx">wrapFlashVideos</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">object</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">object</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">object</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="nx">object</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;JIATHISSWF&quot;</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;param[name=movie]&#39;</span><span class="p">,</span> <span class="nx">object</span><span class="p">).</span><span class="nx">length</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kd">var</span> <span class="nx">wrapper</span> <span class="o">=</span> <span class="nx">object</span><span class="p">.</span><span class="nx">before</span><span class="p">(</span><span class="s1">&#39;&lt;div class=&quot;flash-video&quot;&gt;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">previous</span><span class="p">();</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="nx">wrapper</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="nx">object</span><span class="p">);</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'>  <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;iframe[src*=vimeo],iframe[src*=youtube]&#39;</span><span class="p">).</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">iframe</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">iframe</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">iframe</span><span class="p">);</span>
+</span><span class='line'>    <span class="kd">var</span> <span class="nx">wrapper</span> <span class="o">=</span> <span class="nx">iframe</span><span class="p">.</span><span class="nx">before</span><span class="p">(</span><span class="s1">&#39;&lt;div class=&quot;flash-video&quot;&gt;&lt;div&gt;&#39;</span><span class="p">).</span><span class="nx">previous</span><span class="p">();</span>
+</span><span class='line'>    <span class="nx">$</span><span class="p">(</span><span class="nx">wrapper</span><span class="p">).</span><span class="nx">children</span><span class="p">().</span><span class="nx">append</span><span class="p">(</span><span class="nx">iframe</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">});</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
 
 </div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">继续阅读 &rarr;</a>
-    </footer>
+
+<span class="byline author vcard">Posted by <span class="fn">wenbin wang</span></span>
+
+      
+
+
+
+
+
+
+
+
   
 
 
-    </article>
+<time datetime="2012-11-05T19:08:00+08:00" pubdate data-updated="true">Nov 5<span>th</span>, 2012</time>
+      
+
+<span class="categories">
   
-  <div class="pagination">
+    <a class='category' href='/blog/categories/octopress/'>Octopress</a>
+  
+</span>
+
+
+    </p>
     
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+      <div class="sharing">
+  
+  
+  
+  
+    <!-- JiaThis Button BEGIN -->
+    <div class="jiathis_style">
+      <span class="jiathis_txt">分享到：</span>
+      <a class="jiathis_button_tsina">新浪微博</a>
+      <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_renren">人人网</a>
+      <a class="jiathis_button_qzone">QQ空间</a>
+      <a class="jiathis_button_tqq">腾讯微博</a>
+      <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+      <a class="jiathis_counter_style"></a>
+    </div>
+    <script type="text/javascript" src="http://v2.jiathis.com/code/jia.js?uid=1704686" charset="utf-8"></script>
+    <!-- JiaThis Button END -->
+  
 </div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/11/02/macvim-cpu-stuck/" title="Previous Post: MacVim处理中文时卡顿、CPU占用过高问题">&laquo; MacVim处理中文时卡顿、CPU占用过高问题</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/11/09/chartboost-x-new-released/" title="Next Post: Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
 <aside class="sidebar">
   
     <section>
@@ -501,7 +362,7 @@ Sigh&#8230;</p>
 <section>
   <h1>GitHub Repos</h1>
   <ul id="gh_repos">
-    <li class="loading">Status updating&#8230;</li>
+    <li class="loading">Status updating...</li>
   </ul>
   
   <a href="https://github.com/wenbin1989">@wenbin1989</a> on GitHub
@@ -531,6 +392,7 @@ Sigh&#8230;</p>
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -545,7 +407,10 @@ Sigh&#8230;</p>
       var disqus_shortname = 'geeksavetheworld';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://geeksavetheworld.com/blog/2012/11/05/add-jiathis-to-octopress-blog/';
+        var disqus_url = 'http://geeksavetheworld.com/blog/2012/11/05/add-jiathis-to-octopress-blog/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

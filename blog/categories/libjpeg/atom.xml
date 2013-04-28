@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: libjpeg | 技术男儿裆自强]]></title>
+  <link href="http://geeksavetheworld.com/blog/categories/libjpeg/atom.xml" rel="self"/>
+  <link href="http://geeksavetheworld.com/"/>
+  <updated>2013-04-28T15:49:19+08:00</updated>
+  <id>http://geeksavetheworld.com/</id>
+  <author>
+    <name><![CDATA[wenbin wang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[小议libjpeg解压损坏文件时的错误处理]]></title>
+    <link href="http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/"/>
+    <updated>2012-11-01T22:48:00+08:00</updated>
+    <id>http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image</id>
+    <content type="html"><![CDATA[<p>本文主要介绍libjpeg解压损坏文件时，可能的一些错误与处理方法。libjpeg的常规使用请参阅文档或其他文章。</p>
+
+<h2>问题1：错误处理</h2>
+
+<p>使用libjpeg解压文件时难免产生错误，原因可能是图片文件损坏、io错误、内存不足等等。
+默认的错误处理函数会调用exit()函数，导致整个进程结束，这对用户来说是非常不友好的。我们需要注册自定义错误处理函数，改变此行为。</p>
+
+<p>libjpeg采用c语言的setjmp/longjmp机制实现错误处理，首先需要包含以下头文件：
+``` c</p>
+
+<h1>include &lt;setjmp.h></h1>
+
+<p>```</p>
+
+<p>定义错误处理结构体：
+``` c
+struct my_error_mgr {
+  struct jpeg_error_mgr pub;    /<em> "public" fields </em>/</p>
+
+<p>  jmp_buf setjmp_buffer;    /<em> for return to caller </em>/
+};</p>
+
+<p>typedef struct my_error_mgr * my_error_ptr;
+```</p>
+
+<p>实现错误处理函数：
+``` c
+METHODDEF(void)
+my_error_exit (j_common_ptr cinfo)
+{
+  /<em> cinfo->err really points to a my_error_mgr struct, so coerce pointer </em>/
+  my_error_ptr myerr = (my_error_ptr) cinfo->err;</p>
+
+<p>  /<em> Always display the message. </em>/
+  /<em> We could postpone this until after returning, if we chose. </em>/
+  (*cinfo->err->output_message) (cinfo);</p>
+
+<p>  /<em> Return control to the setjmp point </em>/
+  longjmp(myerr->setjmp_buffer, 1);
+}
+```
+以上代码只是简单的打印错误信息，之后调用longjmp，使控制流跳转到setjmp设置的代码块。
+如果需要，还可通过cinfo->err->msg_code判断错误类型，进行进一步处理。</p>
+
+<!-- more -->
+
+
+<p>实现解压函数：
+``` c
+GLOBAL(int)
+read_JPEG_file (char * filename)
+{
+  struct jpeg_decompress_struct cinfo;
+  struct my_error_mgr jerr;
+  /<em> More stuff </em>/
+  FILE * infile;        /<em> source file </em>/</p>
+
+<p>  /<em> In this example we want to open the input file before doing anything else,
+   * so that the setjmp() error recovery below can assume the file is open.
+   </em>/
+  if ((infile = fopen(filename, "rb")) == NULL) {</p>
+
+<pre><code>fprintf(stderr, "can't open %s\n", filename);
+return 0;
+</code></pre>
+
+<p>  }</p>
+
+<p>  /<em> We set up the normal JPEG error routines, then override error_exit. </em>/
+  cinfo.err = jpeg_std_error(&amp;jerr.pub);
+  jerr.pub.error_exit = my_error_exit;
+  /<em> Establish the setjmp return context for my_error_exit to use. </em>/
+  if (setjmp(jerr.setjmp_buffer)) {</p>
+
+<pre><code>/* If we get here, the JPEG code has signaled an error.
+ * We need to clean up the JPEG object, close the input file, and return.
+ */
+jpeg_destroy_decompress(&amp;cinfo);
+fclose(infile);
+return 0;
+</code></pre>
+
+<p>  }</p>
+
+<p>  /<em> ...
+   * 读取数据
+   * ...
+   </em>/</p>
+
+<p>  /<em> This is an important step since it will release a good deal of memory. </em>/
+  jpeg_destroy_decompress(&amp;cinfo);</p>
+
+<p>  /<em> After finish_decompress, we can close the input file.
+   * Here we postpone it until after no more JPEG errors are possible,
+   * so as to simplify the setjmp error logic above.
+   </em>/
+  fclose(infile);</p>
+
+<p>  return 1;
+}
+```</p>
+
+<p>以上代码重点在于，注册my_error_exit回调函数，之后调用setjmp函数设置返回代码块。
+发生错误时，回调my_error_exit函数，在my_error_exit函数末尾，控制流跳转到setjmp设置的代码块，在此代码块完成释放资源等操作。
+这样，即使发生错误，也不至于进程退出，造成用户困扰。</p>
+
+<h2>问题2：关于jpeg_finish_decompress()函数</h2>
+
+<p>网上几乎所有使用libjpeg解压图片的代码，在解压完成后都会调用以下代码：
+``` c
+/<em> Finish decompression </em>/
+jpeg_finish_decompress(&amp;cinfo);
+/<em> Release JPEG decompression object </em>/
+jpeg_destroy_decompress(&amp;cinfo);</p>
+
+<p>```</p>
+
+<p>其中，jpeg_finish_decompress()函数的作用为：</p>
+
+<ul>
+<li>检查jpeg对象状态是否正常，并将其设为解压完成状态</li>
+<li>读取输入数据源中剩余数据，直至EOI标记（0xFF,0xD9，标记jpeg图片结束）</li>
+<li>释放jpeg对象分配的工作内存</li>
+</ul>
+
+
+<p>实现如下：
+``` c
+GLOBAL(boolean)
+jpeg_finish_decompress (j_decompress_ptr cinfo)
+{
+  if ((cinfo->global_state == DSTATE_SCANNING ||</p>
+
+<pre><code>   cinfo-&gt;global_state == DSTATE_RAW_OK) &amp;&amp; ! cinfo-&gt;buffered_image) {
+/* Terminate final pass of non-buffered mode */
+if (cinfo-&gt;output_scanline &lt; cinfo-&gt;output_height)
+  ERREXIT(cinfo, JERR_TOO_LITTLE_DATA);
+(*cinfo-&gt;master-&gt;finish_output_pass) (cinfo);
+cinfo-&gt;global_state = DSTATE_STOPPING;
+</code></pre>
+
+<p>  } else if (cinfo->global_state == DSTATE_BUFIMAGE) {</p>
+
+<pre><code>/* Finishing after a buffered-image operation */
+cinfo-&gt;global_state = DSTATE_STOPPING;
+</code></pre>
+
+<p>  } else if (cinfo->global_state != DSTATE_STOPPING) {</p>
+
+<pre><code>/* STOPPING = repeat call after a suspension, anything else is error */
+ERREXIT1(cinfo, JERR_BAD_STATE, cinfo-&gt;global_state);
+</code></pre>
+
+<p>  }
+  /<em> Read until EOI </em>/
+  while (! cinfo->inputctl->eoi_reached) {</p>
+
+<pre><code>if ((*cinfo-&gt;inputctl-&gt;consume_input) (cinfo) == JPEG_SUSPENDED)
+  return FALSE;     /* Suspend, come back later */
+</code></pre>
+
+<p>  }
+  /<em> Do final cleanup </em>/
+  (<em>cinfo->src->term_source) (cinfo);
+  /</em> We can use jpeg_abort to release memory and reset global_state */
+  jpeg_abort((j_common_ptr) cinfo);
+  return TRUE;
+}
+```</p>
+
+<p>从以上代码可以看到，jpeg_finish_decompress()函数是利用jpeg_abort()函数进行释放工作内存操作的。</p>
+
+<p>解压损坏图片时，即使在调用jpeg_finish_decompress()之前的解压过程完全正常，调用jpeg_finish_decompress()时仍可能产生错误。
+错误原因可能数据源结构损坏，导致丢失EOI标记，或有多个SOI标记等。
+例如，解压下图时，调用jpeg_finish_decompress()之前完全正常，但调用jpeg_finish_decompress()时会产生错误：
+<em>Invalid JPEG file structure: two SOI markers</em></p>
+
+<p><img src="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg"></p>
+
+<p>直觉上，如果在调用jpeg_finish_decompress()之前未发生错误，则直接利用所读取的图片数据用于显示等操作即可，
+不必理会jpeg_finish_decompress()中可能产生的错误，进一步，甚至可能不必调用jpeg_finish_decompress()函数。
+由此引出下一个问题：</p>
+
+<h2>问题3：调用jpeg_destroy_decompress()之前是否有必要调用jpeg_finish_decompress()？</h2>
+
+<p>由上文所述，调用jpeg_finish_decompress()的目的为：</p>
+
+<ol>
+<li>检查jpeg对象状态是否正常，并将其设为解压完成状态</li>
+<li>读取输入数据源中剩余数据，直至EOI标记（0xFF,0xD9，标记jpeg图片结束）</li>
+<li>释放jpeg对象分配的工作内存</li>
+</ol>
+
+
+<p>对于目的1，如果不需检测jpeg对象状态，或者不再继续使用该对象，可直接忽略。</p>
+
+<p>对于目的2，如果不需读取并消耗剩余输入数据源数据，可直接忽略。</p>
+
+<p>对于目的3，即使不调用jpeg_finish_decompress()，jpeg对象分配的工作内存也会在调用jpeg_destroy_decompress()时被释放，不会造成内存泄露。
+此外，如果还要继续使用jpeg对象，也可调用jpeg_abort()函数进行释放工作内存操作。</p>
+
+<p>可简单做出如下结论：</p>
+
+<ul>
+<li>如果只需得到解压数据，不再使用jpeg对象，则完全可以不必调用jpeg_finish_decompress()函数，直接调用jpeg_destroy_decompress()函数释放内存即可。</li>
+<li>如果还需使用jpeg对象，但不在意对象状态，且忽略输入数据源剩余数据，可用jpeg_abort()代替jpeg_finish_decompress()，达到释放工作内存的目的。</li>
+<li>如需检查jpeg对象状态，或者需要读取并消耗剩余输入数据源数据，则需调用jpeg_finish_decompress()函数。
+此时需要注意jpeg_finish_decompress()可能产生的错误。</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

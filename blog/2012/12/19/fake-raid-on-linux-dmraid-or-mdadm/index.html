@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>linux之主板raid(fake raid): dmraid or mdadm - 技术男儿裆自强</title>
+  <meta name="author" content="wenbin wang">
+
+  
+  <meta name="description" content="linux下最重要的raid管理程序为dmraid与。鉴于mdadm的各种优点与不断的更新完善，以及dmraid似乎停止开发，管理fake raid与software raid的首选均为mdadm。另外，mdadm也得到了intel的极力推荐。">
+  <meta name="keywords" content="linux 主板 fake raid dmraid mdadm">
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="技术男儿裆自强" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+-->
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-35757346-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">技术男儿裆自强</a></h1>
+  
+    <h2>哭天喊地，跺脚骂娘，技术男儿裆自强</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:geeksavetheworld.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Linux之主板raid(fake Raid): Dmraid or Mdadm</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+        
+         | <a href="#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>当系统有多块硬盘时，通过组建<a href="http://en.wikipedia.org/wiki/RAID">raid</a>以提升磁盘性能或提供磁盘冗余，往往成为人们的首选考量。
+当今主流raid实现方案大致可分为三种：</p>
+
+<ul>
+<li>硬件raid(hardware raid)，通过购买昂贵的raid卡实现，我等平民不考虑。</li>
+<li>软件raid(software raid)，通过操作系统内软件创建阵列，raid处理开销由CPU负责。</li>
+<li>主板raid(fake raid)，通过主板内建raid控制器创建阵列，由操作系统驱动识别。</li>
+</ul>
+
+
+<p>需要注意的是，fake raid仅提供廉价的控制器，raid处理开销仍由CPU负责，因此性能与CPU占用基本与software raid持平。
+如果只有单个linux系统，使用software raid一般比fake raid更健壮，但是，在多启动环境中(例如windows与linux双系统)，为了使各个系统都能正确操作相同的raid分区，就必须使用fake raid了。
+可参考<a href="https://help.ubuntu.com/community/FakeRaidHowto">FakeRaidHowto @ Community Ubuntu Documentation</a>以获得更多相关信息。</p>
+
+<p>linux下最重要的raid管理程序为<a href="http://linux.die.net/man/8/dmraid">dmraid</a>与<a href="http://linux.die.net/man/8/mdadm">mdadm</a>。
+本人印象中，前者用于识别rake raid，后者用于管理software raid，但最近更新系统时突然发现，openSUSE及rhel等发行版都改用mdadm替代dmraid来处理rake raid。
+放狗搜索一番后，发现大家都有相似的疑问，便想到简单考察总结一番，对linux下rake raid应该使用dmraid还是mdadm进行管理做一个评判。</p>
+
+<!--more-->
+
+
+<p><em>说明：本人操作系统为openSUSE 12.2 x86_64，主板南桥为ICH10R，两块硬盘通过Intel Matrix Storage Manager Option Rom工具程序(开机自检时按Ctrl + I进入)设定为raid 0。</em></p>
+
+<h2>起源与发展</h2>
+
+<p>dmraid从linux kernel version 2.6.18起引入，由Red Hat维护，主要目的为管理fake raid，通过libdevmapper与device-mapper kernel runtime实现。</p>
+
+<p>mdadm从linux kernel version 2.6.27起引入，由SUSE维护，主要目的为管理software raid，通过md (Multiple Devices) device driver实现。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>/sbin/dmraid --version
+</span><span class='line'>dmraid version:         1.0.0.rc16-3 <span class="o">(</span>2010.01.12<span class="o">)</span>
+</span><span class='line'>dmraid library version: 1.0.0.rc16-3 <span class="o">(</span>2010.01.12<span class="o">)</span>
+</span><span class='line'>device-mapper version:  unknown
+</span></code></pre></td></tr></table></div></figure>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>/sbin/mdadm --version
+</span><span class='line'>mdadm - v3.2.5 - 18th May 2012
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>由以上对比可以看出，dmraid自2010年初就没有更新过了，mdadm则一直更新频繁。
+特别是，mdadm 3.0版本加入对<a href="https://raid.wiki.kernel.org/index.php/RAID_setup#External_Metadata">external metadata</a>的支持；mdadm 3.2.1版本的release说明中有如下内容：</p>
+
+<blockquote><p>Secondly, the support for Intel Matrix Storage Manager (IMSM) arrays has been substantially enhanced. Spare migration is now possible as is level migration and OLCE (OnLine Capacity Expansion). This support is not quite complete yet and requires MDADM_EXPERIMENTAL=1 in the environment to ensure people only use it with care. In particular if you start a reshape in Linux and then shutdown and boot into Window, the Windows driver may not correctly restart the reshape. And vice-versa.</p></blockquote>
+
+<p>自此，mdadm正式踏入管理fake raid的舞台。</p>
+
+<h2>功能比较</h2>
+
+<p>下图为<a href="http://download.intel.com/design/intarch/papers/326024.pdf">Intel文档</a>中对dmraid与mdadm的简单比较，以供参考：</p>
+
+<p><img src="https://lh5.googleusercontent.com/-ZgSuXbQSn5E/UNK-0CcKq-I/AAAAAAAAAJE/uZAQg1Epow0/s1229/comparison_of_dm_and_md.png" alt="comparison of dmraid and mdadm" /></p>
+
+<p>另外已知的区别有：</p>
+
+<ul>
+<li>mdadm可以使用其他电脑的磁盘进行恢复。</li>
+<li>dmraid有时无法正确识别大硬盘(3TB imsm raid1被识别为746GB)。</li>
+<li><em>不断添加中&#8230;</em></li>
+</ul>
+
+
+<h2>实战比较</h2>
+
+<p>使用openSUSE 12.2 x86_64 DVD安装系统，dmraid与mdadm均能正确识别已经设置好的raid分区，正常安装、引导启动系统。唯一不同的是，dmraid需要设置单独的/boot分区，mdadm则无此限制。</p>
+
+<p>安装完成后，用dd测试硬盘读写速度并监控CPU使用率，二者无任何差别。</p>
+
+<h2>结论</h2>
+
+<p>鉴于mdadm的各种优点与不断的更新完善，以及dmraid似乎停止开发，管理fake raid与software raid的首选均为mdadm。
+另外，mdadm也得到了intel的极力推荐。</p>
+
+<p>有关mdadm的具体使用，本文不再讨论，可参考<a href="http://download.intel.com/design/intarch/papers/326024.pdf">Intel® Rapid Storage Technology in Linux</a>。</p>
+
+<p><strong><em>欢迎大家帮助补充更多相关资料。</em></strong></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">wenbin wang</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/linux/'>linux</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+    <!-- JiaThis Button BEGIN -->
+    <div class="jiathis_style">
+      <span class="jiathis_txt">分享到：</span>
+      <a class="jiathis_button_tsina">新浪微博</a>
+      <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_renren">人人网</a>
+      <a class="jiathis_button_qzone">QQ空间</a>
+      <a class="jiathis_button_tqq">腾讯微博</a>
+      <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
+      <a class="jiathis_counter_style"></a>
+    </div>
+    <script type="text/javascript" src="http://v2.jiathis.com/code/jia.js?uid=1704686" charset="utf-8"></script>
+    <!-- JiaThis Button END -->
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/11/09/chartboost-x-new-released/" title="Previous Post: Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x">&laquo; Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/c-c-'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg'>libjpeg (1)</a></li><li><a href='/blog/categories/linux'>linux (1)</a></li><li><a href='/blog/categories/mac'>mac (1)</a></li><li><a href='/blog/categories/octopress'>Octopress (1)</a></li><li><a href='/blog/categories/vim'>vim (1)</a></li></ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">向Octopress添加JiaThis分享工具及冲突解决</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/02/macvim-cpu-stuck/">MacVim处理中文时卡顿、CPU占用过高问题</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">小议libjpeg解压损坏文件时的错误处理</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>About Me</h1>
+  <p>wenbin wang，清华大学航天航空学院博士生，编程爱好者。</p>
+  <p>自学编程若干年，擅长C/C++，对GUI、图形、数据库等均有涉猎。利用Qt、OSG、cocos2d-x等完成过多个大型项目。</p>
+  <p>联系方式: wenbin1989 at gmail dot com，欢迎交流讨论。</p>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/wenbin1989">@wenbin1989</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'wenbin1989',
+            count: 2,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - wenbin wang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'geeksavetheworld';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/';
+        var disqus_url = 'http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
