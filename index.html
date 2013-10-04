@@ -9,9 +9,9 @@
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="当系统有多块硬盘时，通过组建raid以提升磁盘性能或提供磁盘冗余，往往成为人们的首选考量。
-当今主流raid实现方案大致可分为三种： 硬件raid(hardware raid)，通过购买昂贵的raid卡实现，我等平民不考虑。
-软件raid(software raid)，通过操作系统内软件创建阵列， &hellip;">
+  <meta name="description" content="本人电脑用intel主板raid1来备份重要数据，昨天发现其中一块盘挂了。
+二话不说换上一块新盘，开机Ctrl+I进入intel raid管理界面，设置好之后进入操作系统进行raid重建。 一是偷懒，二是想打会游戏，所以重建工作选择进入windows进行。
+打开最新版Intel Matrix &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -81,6 +81,87 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Intel主板raid1灾难恢复小计</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-04T10:32:00+08:00" pubdate data-updated="true">Oct 4<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本人电脑用intel主板raid1来备份重要数据，昨天发现其中一块盘挂了。
+二话不说换上一块新盘，开机Ctrl+I进入intel raid管理界面，设置好之后进入操作系统进行raid重建。</p>
+
+<p>一是偷懒，二是想打会游戏，所以重建工作选择进入windows进行。
+打开最新版Intel Matrix Storage Manager程序，会自动检测并重建raid1阵列。
+也可以在linux下使用mdadm进行重建。</p>
+
+<p>重建完成后，重启进入linux，运行<code>mount /dev/md126 /mnt</code>进行挂载，却出现以下错误：</p>
+
+<blockquote><p>mount: wrong fs type, bad option, bad superblock on /dev/md126,
+missing codepage or helper program, or other error
+In some cases useful info is found in syslog - try
+dmesg | tail or so</p></blockquote>
+
+<p>用testdisk查看分区表：</p>
+
+<pre><code>testdisk /list /dev/md126
+</code></pre>
+
+<p>与原始分区相符，目测分区表没有问题，应该是文件系统受损。</p>
+
+<p>用fsck进行检测：</p>
+
+<pre><code>fsck /dev/md126
+</code></pre>
+
+<p>出现以下提示：</p>
+
+<blockquote><p>The filesystem size (according to the superblock) is 244189980 blocks
+The physical size of the device is 244189952 blocks
+Either the superblock or the partition table is likely to be corrupt!
+Abort &lt;y>?</p></blockquote>
+
+<p>猜测是新换的硬盘跟原来的型号不一样（一个希捷一个西数），造成的上述问题。</p>
+
+<p>输入y退出fsck检测，google一番后，找到如下解决方案：</p>
+
+<pre><code>resize2fs -f /dev/md126 244189952
+</code></pre>
+
+<p>运行该命令将filesystem size重设为244189952（fsck检测时提示的physical size）。
+重新运行<code>fsck /dev/md126</code>进行检测，无任何问题。挂载后查看数据，完好如初。</p>
+
+<p>谨以此记。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -463,11 +544,15 @@ Sigh&#8230;</p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (1)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (2)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
@@ -483,10 +568,6 @@ Sigh&#8230;</p>
     
       <li class="post">
         <a href="/blog/2012/11/02/macvim-cpu-stuck/">MacVim处理中文时卡顿、CPU占用过高问题</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">小议libjpeg解压损坏文件时的错误处理</a>
       </li>
     
   </ul>

@@ -5,12 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>linux之主板raid(fake raid): dmraid or mdadm - 技术男儿裆自强</title>
+  <title>intel主板raid1灾难恢复小计 - 技术男儿裆自强</title>
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="linux下最重要的raid管理程序为dmraid与。鉴于mdadm的各种优点与不断的更新完善，以及dmraid似乎停止开发，管理fake raid与software raid的首选均为mdadm。另外，mdadm也得到了intel的极力推荐。">
-  <meta name="keywords" content="linux 主板 fake raid dmraid mdadm">
+  <meta name="description" content="重建intel raid1后，mount出现wrong fs type, bad option, bad superblock错误；fsck出现Either the superblock or the partition table is likely to be corrupt错误。 &hellip;">
+  <meta name="keywords" content="intel raid1 恢复 fsck resize2fs superblock">
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm">
+  <link rel="canonical" href="http://geeksavetheworld.com/blog/2013/10/04/intel-fake-raid1-disaster-recovery">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="技术男儿裆自强" type="application/atom+xml">
@@ -82,7 +82,7 @@
   
   <header>
     
-      <h1 class="entry-title">Linux之主板raid(fake Raid): Dmraid or Mdadm</h1>
+      <h1 class="entry-title">Intel主板raid1灾难恢复小计</h1>
     
     
       <p class="meta">
@@ -98,7 +98,7 @@
   
 
 
-<time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+<time datetime="2013-10-04T10:32:00+08:00" pubdate data-updated="true">Oct 4<span>th</span>, 2013</time>
         
          | <a href="#disqus_thread">Comments</a>
         
@@ -107,89 +107,50 @@
   </header>
 
 
-<div class="entry-content"><p>当系统有多块硬盘时，通过组建<a href="http://en.wikipedia.org/wiki/RAID">raid</a>以提升磁盘性能或提供磁盘冗余，往往成为人们的首选考量。
-当今主流raid实现方案大致可分为三种：</p>
+<div class="entry-content"><p>本人电脑用intel主板raid1来备份重要数据，昨天发现其中一块盘挂了。
+二话不说换上一块新盘，开机Ctrl+I进入intel raid管理界面，设置好之后进入操作系统进行raid重建。</p>
 
-<ul>
-<li>硬件raid(hardware raid)，通过购买昂贵的raid卡实现，我等平民不考虑。</li>
-<li>软件raid(software raid)，通过操作系统内软件创建阵列，raid处理开销由CPU负责。</li>
-<li>主板raid(fake raid)，通过主板内建raid控制器创建阵列，由操作系统驱动识别。</li>
-</ul>
+<p>一是偷懒，二是想打会游戏，所以重建工作选择进入windows进行。
+打开最新版Intel Matrix Storage Manager程序，会自动检测并重建raid1阵列。
+也可以在linux下使用mdadm进行重建。</p>
 
+<p>重建完成后，重启进入linux，运行<code>mount /dev/md126 /mnt</code>进行挂载，却出现以下错误：</p>
 
-<p>需要注意的是，fake raid仅提供廉价的控制器，raid处理开销仍由CPU负责，因此性能与CPU占用基本与software raid持平。
-如果只有单个linux系统，使用software raid一般比fake raid更健壮，但是，在多启动环境中(例如windows与linux双系统)，为了使各个系统都能正确操作相同的raid分区，就必须使用fake raid了。
-可参考<a href="https://help.ubuntu.com/community/FakeRaidHowto">FakeRaidHowto @ Community Ubuntu Documentation</a>以获得更多相关信息。</p>
+<blockquote><p>mount: wrong fs type, bad option, bad superblock on /dev/md126,
+missing codepage or helper program, or other error
+In some cases useful info is found in syslog - try
+dmesg | tail or so</p></blockquote>
 
-<p>linux下最重要的raid管理程序为<a href="http://linux.die.net/man/8/dmraid">dmraid</a>与<a href="http://linux.die.net/man/8/mdadm">mdadm</a>。
-本人印象中，前者用于识别rake raid，后者用于管理software raid，但最近更新系统时突然发现，openSUSE及rhel等发行版都改用mdadm替代dmraid来处理rake raid。
-放狗搜索一番后，发现大家都有相似的疑问，便想到简单考察总结一番，对linux下rake raid应该使用dmraid还是mdadm进行管理做一个评判。</p>
+<p>用testdisk查看分区表：</p>
 
-<!--more-->
+<pre><code>testdisk /list /dev/md126
+</code></pre>
 
+<p>与原始分区相符，目测分区表没有问题，应该是文件系统受损。</p>
 
-<p><em>说明：本人操作系统为openSUSE 12.2 x86_64，主板南桥为ICH10R，两块硬盘通过Intel Matrix Storage Manager Option Rom工具程序(开机自检时按Ctrl + I进入)设定为raid 0。</em></p>
+<p>用fsck进行检测：</p>
 
-<h2>起源与发展</h2>
+<pre><code>fsck /dev/md126
+</code></pre>
 
-<p>dmraid从linux kernel version 2.6.18起引入，由Red Hat维护，主要目的为管理fake raid，通过libdevmapper与device-mapper kernel runtime实现。</p>
+<p>出现以下提示：</p>
 
-<p>mdadm从linux kernel version 2.6.27起引入，由SUSE维护，主要目的为管理software raid，通过md (Multiple Devices) device driver实现。</p>
+<blockquote><p>The filesystem size (according to the superblock) is 244189980 blocks
+The physical size of the device is 244189952 blocks
+Either the superblock or the partition table is likely to be corrupt!
+Abort &lt;y>?</p></blockquote>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>/sbin/dmraid --version
-</span><span class='line'>dmraid version:         1.0.0.rc16-3 <span class="o">(</span>2010.01.12<span class="o">)</span>
-</span><span class='line'>dmraid library version: 1.0.0.rc16-3 <span class="o">(</span>2010.01.12<span class="o">)</span>
-</span><span class='line'>device-mapper version:  unknown
-</span></code></pre></td></tr></table></div></figure>
+<p>猜测是新换的硬盘跟原来的型号不一样（一个希捷一个西数），造成的上述问题。</p>
 
+<p>输入y退出fsck检测，google一番后，找到如下解决方案：</p>
 
-<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='bash'><span class='line'><span class="nv">$ </span>/sbin/mdadm --version
-</span><span class='line'>mdadm - v3.2.5 - 18th May 2012
-</span></code></pre></td></tr></table></div></figure>
+<pre><code>resize2fs -f /dev/md126 244189952
+</code></pre>
 
+<p>运行该命令将filesystem size重设为244189952（fsck检测时提示的physical size）。
+重新运行<code>fsck /dev/md126</code>进行检测，无任何问题。挂载后查看数据，完好如初。</p>
 
-<p>由以上对比可以看出，dmraid自2010年初就没有更新过了，mdadm则一直更新频繁。
-特别是，mdadm 3.0版本加入对<a href="https://raid.wiki.kernel.org/index.php/RAID_setup#External_Metadata">external metadata</a>的支持；mdadm 3.2.1版本的release说明中有如下内容：</p>
-
-<blockquote><p>Secondly, the support for Intel Matrix Storage Manager (IMSM) arrays has been substantially enhanced. Spare migration is now possible as is level migration and OLCE (OnLine Capacity Expansion). This support is not quite complete yet and requires MDADM_EXPERIMENTAL=1 in the environment to ensure people only use it with care. In particular if you start a reshape in Linux and then shutdown and boot into Window, the Windows driver may not correctly restart the reshape. And vice-versa.</p></blockquote>
-
-<p>自此，mdadm正式踏入管理fake raid的舞台。</p>
-
-<h2>功能比较</h2>
-
-<p>下图为<a href="http://download.intel.com/design/intarch/papers/326024.pdf">Intel文档</a>中对dmraid与mdadm的简单比较，以供参考：</p>
-
-<p><img src="https://lh5.googleusercontent.com/-ZgSuXbQSn5E/UNK-0CcKq-I/AAAAAAAAAJE/uZAQg1Epow0/s1229/comparison_of_dm_and_md.png" alt="comparison of dmraid and mdadm" /></p>
-
-<p>另外已知的区别有：</p>
-
-<ul>
-<li>mdadm可以使用其他电脑的磁盘进行恢复。</li>
-<li>dmraid有时无法正确识别大硬盘(3TB imsm raid1被识别为746GB)。</li>
-<li><em>不断添加中&#8230;</em></li>
-</ul>
-
-
-<h2>实战比较</h2>
-
-<p>使用openSUSE 12.2 x86_64 DVD安装系统，dmraid与mdadm均能正确识别已经设置好的raid分区，正常安装、引导启动系统。唯一不同的是，dmraid需要设置单独的/boot分区，mdadm则无此限制。</p>
-
-<p>安装完成后，用dd测试硬盘读写速度并监控CPU使用率，二者无任何差别。</p>
-
-<h2>结论</h2>
-
-<p>鉴于mdadm的各种优点与不断的更新完善，以及dmraid似乎停止开发，管理fake raid与software raid的首选均为mdadm。
-另外，mdadm也得到了intel的极力推荐。</p>
-
-<p>有关mdadm的具体使用，本文不再讨论，可参考<a href="http://download.intel.com/design/intarch/papers/326024.pdf">Intel® Rapid Storage Technology in Linux</a>。</p>
-
-<p><strong><em>欢迎大家帮助补充更多相关资料。</em></strong></p>
+<p>谨以此记。</p>
 </div>
 
 
@@ -212,7 +173,7 @@
   
 
 
-<time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
+<time datetime="2013-10-04T10:32:00+08:00" pubdate data-updated="true">Oct 4<span>th</span>, 2013</time>
       
 
 <span class="categories">
@@ -248,10 +209,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/11/09/chartboost-x-new-released/" title="Previous Post: Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x">&laquo; Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+        <a class="basic-alignment left" href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/" title="Previous Post: linux之主板raid(fake raid): dmraid or mdadm">&laquo; linux之主板raid(fake raid): dmraid or mdadm</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/" title="Next Post: intel主板raid1灾难恢复小计">intel主板raid1灾难恢复小计 &raquo;</a>
       
     </p>
   </footer>
@@ -353,8 +312,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/';
-        var disqus_url = 'http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/';
+        var disqus_identifier = 'http://geeksavetheworld.com/blog/2013/10/04/intel-fake-raid1-disaster-recovery/';
+        var disqus_url = 'http://geeksavetheworld.com/blog/2013/10/04/intel-fake-raid1-disaster-recovery/';
         var disqus_script = 'embed.js';
       
     (function () {
