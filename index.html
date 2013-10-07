@@ -9,9 +9,8 @@
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="本人电脑用intel主板raid1来备份重要数据，昨天发现其中一块盘挂了。
-二话不说换上一块新盘，开机Ctrl+I进入intel raid管理界面，设置好之后进入操作系统进行raid重建。 一是偷懒，二是想打会游戏，所以重建工作选择进入windows进行。
-打开最新版Intel Matrix &hellip;">
+  <meta name="description" content="首先，运行 emerge --ask nginx trac 安装所需应用。 需注意确保trac的USES标记中含有fastcgi与vhosts。
+如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -81,6 +80,201 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-07T23:14:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2013</time>
+        
+         | <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/#disqus_thread">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>首先，运行</p>
+
+<pre><code>emerge --ask nginx trac
+</code></pre>
+
+<p>安装所需应用。</p>
+
+<p>需注意确保trac的USES标记中含有fastcgi与vhosts。
+如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用，而本人更倾向于根据需要手动安装。</p>
+
+<p>运行</p>
+
+<pre><code>webapp-config -I -h trac trac 1.0.1
+</code></pre>
+
+<p>将trac安装在名为trac的虚拟目录下。
+再运行</p>
+
+<pre><code>trac-admin /path/to/project initenv
+</code></pre>
+
+<p>按提示创建trac环境。
+详细介绍及trac环境的目录结构见<a href="http://trac.edgewall.org/wiki/TracEnvironment">wiki</a>。</p>
+
+<p>发布静态资源</p>
+
+<pre><code>trac-admin /path/to/project deploy /var/www/trac
+</code></pre>
+
+<p>如配置为多项目，则需将<code>/var/www/trac/htdocs</code>下<code>site</code>与<code>common</code>目录移至<code>/var/www/trac/htdocs/project</code>下。</p>
+
+<p>以nginx+fastcgi方式部署trac时，前端nginx做转发，后端fastcgi运行方式有两种：</p>
+
+<ul>
+<li>利用spawn-fcgi等服务，管理运行trac虚拟目录下cgi-bin/trac.fcgi脚本。</li>
+<li>以fcgi协议运行<a href="http://trac.edgewall.org/wiki/TracStandalone">tracd</a>服务。</li>
+</ul>
+
+
+<p>本文主要介绍后者。</p>
+
+<p>运行</p>
+
+<pre><code>tracd --protocol=fcgi /path/to/project
+</code></pre>
+
+<p>进行测试，出现以下错误：</p>
+
+<pre><code>ImportError: No module named flup.server.fcgi
+</code></pre>
+
+<p>查看错误代码，发现是因为当tracd运行协议为fcgi、scgi等时，实现依赖flup，而emeger安装trac时并没有自动安装该依赖。
+运行</p>
+
+<pre><code>emerge --ask flup
+</code></pre>
+
+<p>安装flup后，tracd正常运行，无错误发生。</p>
+
+<p>编辑tracd配置文件(<code>/etc/conf.d/tracd</code>)，修改<code>TRACD_OPTS</code>段落为:</p>
+
+<pre><code>TRACD_OPTS="--protocol=fcgi --env-parent-dir /path/to" (多项目)
+</code></pre>
+
+<p>或</p>
+
+<pre><code>TRACD_OPTS="--protocol=fcgi -s /path/to/project" (单项目)
+</code></pre>
+
+<p>更多tracd选项请运行<code>tracd --help</code>查看。</p>
+
+<p>启动tracd服务：</p>
+
+<pre><code>/etc/init.d/tracd start
+</code></pre>
+
+<p>设置tracd开机自动运行：</p>
+
+<pre><code>rc-update add tracd default
+</code></pre>
+
+<p>最后，配置nginx虚拟目录：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>server {
+</span><span class='line'>        listen   80; ## listen for ipv4; this line is default and implied
+</span><span class='line'>        server_name trac.example.com;
+</span><span class='line'>
+</span><span class='line'>        access_log /var/log/nginx/trac.access_log main;
+</span><span class='line'>        error_log /var/log/nginx/trac.error_log notice;
+</span><span class='line'>
+</span><span class='line'>        # (Or ``^/some/prefix/(.*)``.
+</span><span class='line'>        if ($uri ~ ^/(.*)) {
+</span><span class='line'>                set $path_info /$1;
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>        # it makes sense to serve static resources through Nginx
+</span><span class='line'>        location ~ /(.*?)/chrome/ {
+</span><span class='line'>                rewrite /(.*?)/chrome/(.*) /$1/$2 break;
+</span><span class='line'>                root /var/www/trac/htdocs;
+</span><span class='line'>                access_log        off;
+</span><span class='line'>                expires           max;
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>        location / {
+</span><span class='line'>                fastcgi_pass localhost:8000;
+</span><span class='line'>                include fastcgi_params;
+</span><span class='line'>                fastcgi_param  SCRIPT_NAME        "";
+</span><span class='line'>                fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>        }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上配置适应多项目。单项目时，chrome相关段落改为</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>    # it makes sense to serve static resources through Nginx
+</span><span class='line'>    location ~ /chrome/ {
+</span><span class='line'>            rewrite /chrome/(.*) /$1 break;
+</span><span class='line'>            root /var/www/trac/htdocs;
+</span><span class='line'>            access_log        off;
+</span><span class='line'>            expires           max;
+</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>重启nginx，部署完成。</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -544,11 +738,15 @@ Sigh&#8230;</p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (2)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (3)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">gentoo下使用nginx+fastcgi部署trac</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
@@ -564,10 +762,6 @@ Sigh&#8230;</p>
     
       <li class="post">
         <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">向Octopress添加JiaThis分享工具及冲突解决</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/11/02/macvim-cpu-stuck/">MacVim处理中文时卡顿、CPU占用过高问题</a>
       </li>
     
   </ul>

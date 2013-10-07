@@ -5,12 +5,13 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x - 技术男儿裆自强</title>
+  <title>gentoo下使用nginx+fastcgi部署trac - 技术男儿裆自强</title>
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="游戏中加入Chartboost支持，以实现交叉推广。游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，对Chartboost提供的iOS和Android SDK做了C++封装。运行良好，使用简单。">
-  <meta name="keywords" content="交叉推广, Chartboost, cocos2d-x, 封装, Chartboost-x, C++, wrapper, github, iOS, Android">
+  <meta name="description" content="首先，运行 emerge --ask nginx trac 安装所需应用。 需注意确保trac的USES标记中含有fastcgi与vhosts。
+如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用， &hellip;">
+  <meta name="keywords" content="gentoo nginx trac fastcgi tracd flup">
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released">
+  <link rel="canonical" href="http://geeksavetheworld.com/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="技术男儿裆自强" type="application/atom+xml">
@@ -82,7 +83,7 @@
   
   <header>
     
-      <h1 class="entry-title">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</h1>
+      <h1 class="entry-title">Gentoo下使用nginx+fastcgi部署trac</h1>
     
     
       <p class="meta">
@@ -98,7 +99,7 @@
   
 
 
-<time datetime="2012-11-09T19:54:00+08:00" pubdate data-updated="true">Nov 9<span>th</span>, 2012</time>
+<time datetime="2013-10-07T23:14:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2013</time>
         
          | <a href="#disqus_thread">Comments</a>
         
@@ -107,16 +108,164 @@
   </header>
 
 
-<div class="entry-content"><p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
+<div class="entry-content"><p>首先，运行</p>
 
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
+<pre><code>emerge --ask nginx trac
+</code></pre>
 
-<p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
-最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
+<p>安装所需应用。</p>
 
-<p><a href="https://github.com/wenbin1989/Chartboost-x">Chartboost-x GitHub页</a></p>
+<p>需注意确保trac的USES标记中含有fastcgi与vhosts。
+如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用，而本人更倾向于根据需要手动安装。</p>
 
-<p>该封装基本覆盖了Chartboost SDK的所有接口，实现了包括Delegate等功能，运行良好，使用简单。如果您碰巧也使用cocos2d-x，碰巧也需要Chartboost，那一定要clone下来看看，或许能节省您不少宝贵时间。</p>
+<p>运行</p>
+
+<pre><code>webapp-config -I -h trac trac 1.0.1
+</code></pre>
+
+<p>将trac安装在名为trac的虚拟目录下。
+再运行</p>
+
+<pre><code>trac-admin /path/to/project initenv
+</code></pre>
+
+<p>按提示创建trac环境。
+详细介绍及trac环境的目录结构见<a href="http://trac.edgewall.org/wiki/TracEnvironment">wiki</a>。</p>
+
+<p>发布静态资源</p>
+
+<pre><code>trac-admin /path/to/project deploy /var/www/trac
+</code></pre>
+
+<p>如配置为多项目，则需将<code>/var/www/trac/htdocs</code>下<code>site</code>与<code>common</code>目录移至<code>/var/www/trac/htdocs/project</code>下。</p>
+
+<p>以nginx+fastcgi方式部署trac时，前端nginx做转发，后端fastcgi运行方式有两种：</p>
+
+<ul>
+<li>利用spawn-fcgi等服务，管理运行trac虚拟目录下cgi-bin/trac.fcgi脚本。</li>
+<li>以fcgi协议运行<a href="http://trac.edgewall.org/wiki/TracStandalone">tracd</a>服务。</li>
+</ul>
+
+
+<p>本文主要介绍后者。</p>
+
+<p>运行</p>
+
+<pre><code>tracd --protocol=fcgi /path/to/project
+</code></pre>
+
+<p>进行测试，出现以下错误：</p>
+
+<pre><code>ImportError: No module named flup.server.fcgi
+</code></pre>
+
+<p>查看错误代码，发现是因为当tracd运行协议为fcgi、scgi等时，实现依赖flup，而emeger安装trac时并没有自动安装该依赖。
+运行</p>
+
+<pre><code>emerge --ask flup
+</code></pre>
+
+<p>安装flup后，tracd正常运行，无错误发生。</p>
+
+<p>编辑tracd配置文件(<code>/etc/conf.d/tracd</code>)，修改<code>TRACD_OPTS</code>段落为:</p>
+
+<pre><code>TRACD_OPTS="--protocol=fcgi --env-parent-dir /path/to" (多项目)
+</code></pre>
+
+<p>或</p>
+
+<pre><code>TRACD_OPTS="--protocol=fcgi -s /path/to/project" (单项目)
+</code></pre>
+
+<p>更多tracd选项请运行<code>tracd --help</code>查看。</p>
+
+<p>启动tracd服务：</p>
+
+<pre><code>/etc/init.d/tracd start
+</code></pre>
+
+<p>设置tracd开机自动运行：</p>
+
+<pre><code>rc-update add tracd default
+</code></pre>
+
+<p>最后，配置nginx虚拟目录：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>server {
+</span><span class='line'>        listen   80; ## listen for ipv4; this line is default and implied
+</span><span class='line'>        server_name trac.example.com;
+</span><span class='line'>
+</span><span class='line'>        access_log /var/log/nginx/trac.access_log main;
+</span><span class='line'>        error_log /var/log/nginx/trac.error_log notice;
+</span><span class='line'>
+</span><span class='line'>        # (Or ``^/some/prefix/(.*)``.
+</span><span class='line'>        if ($uri ~ ^/(.*)) {
+</span><span class='line'>                set $path_info /$1;
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>        # it makes sense to serve static resources through Nginx
+</span><span class='line'>        location ~ /(.*?)/chrome/ {
+</span><span class='line'>                rewrite /(.*?)/chrome/(.*) /$1/$2 break;
+</span><span class='line'>                root /var/www/trac/htdocs;
+</span><span class='line'>                access_log        off;
+</span><span class='line'>                expires           max;
+</span><span class='line'>        }
+</span><span class='line'>
+</span><span class='line'>        location / {
+</span><span class='line'>                fastcgi_pass localhost:8000;
+</span><span class='line'>                include fastcgi_params;
+</span><span class='line'>                fastcgi_param  SCRIPT_NAME        "";
+</span><span class='line'>                fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>        }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>以上配置适应多项目。单项目时，chrome相关段落改为</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>    # it makes sense to serve static resources through Nginx
+</span><span class='line'>    location ~ /chrome/ {
+</span><span class='line'>            rewrite /chrome/(.*) /$1 break;
+</span><span class='line'>            root /var/www/trac/htdocs;
+</span><span class='line'>            access_log        off;
+</span><span class='line'>            expires           max;
+</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>重启nginx，部署完成。</p>
 </div>
 
 
@@ -139,12 +288,12 @@
   
 
 
-<time datetime="2012-11-09T19:54:00+08:00" pubdate data-updated="true">Nov 9<span>th</span>, 2012</time>
+<time datetime="2013-10-07T23:14:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/c-slash-c-plus-plus/'>C/C++</a>, <a class='category' href='/blog/categories/cocos2d-x/'>cocos2d-x</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>
   
 </span>
 
@@ -175,10 +324,8 @@
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/11/05/add-jiathis-to-octopress-blog/" title="Previous Post: 向Octopress添加JiaThis分享工具及冲突解决">&laquo; 向Octopress添加JiaThis分享工具及冲突解决</a>
+        <a class="basic-alignment left" href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/" title="Previous Post: intel主板raid1灾难恢复小计">&laquo; intel主板raid1灾难恢复小计</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/" title="Next Post: linux之主板raid(fake raid): dmraid or mdadm">linux之主板raid(fake raid): dmraid or mdadm &raquo;</a>
       
     </p>
   </footer>
@@ -280,8 +427,8 @@
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released/';
-        var disqus_url = 'http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released/';
+        var disqus_identifier = 'http://geeksavetheworld.com/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/';
+        var disqus_url = 'http://geeksavetheworld.com/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/';
         var disqus_script = 'embed.js';
       
     (function () {
