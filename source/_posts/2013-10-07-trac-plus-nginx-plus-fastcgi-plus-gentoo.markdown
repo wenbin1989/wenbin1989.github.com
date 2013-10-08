@@ -32,7 +32,9 @@ description:
 *  利用spawn-fcgi等服务，管理运行trac虚拟目录下cgi-bin/trac.fcgi脚本。
 *  以fcgi协议运行[tracd](http://trac.edgewall.org/wiki/TracStandalone)服务。
 
-本文主要介绍后者。
+由于使用tracd配置最为便捷，其他人提及的又相对较少，所以本文主要介绍后者。
+
+<!-- more -->
 
 运行
     tracd --protocol=fcgi /path/to/project
