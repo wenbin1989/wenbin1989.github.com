@@ -4,7 +4,7 @@
   <title><![CDATA[Category: linux | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -57,7 +57,10 @@
 </ul>
 
 
-<p>由于使用tracd配置最为便捷，其他人提到的又相对较少，所以本文主要介绍后者。</p>
+<p>由于使用tracd配置最为便捷，其他人提及的又相对较少，所以本文主要介绍后者。</p>
+
+<!-- more -->
+
 
 <p>运行</p>
 
@@ -104,31 +107,31 @@
 <p>```
 server {</p>
 
-<pre><code>    listen   80; ## listen for ipv4; this line is default and implied
-    server_name trac.example.com;
+<pre><code>listen   80; ## listen for ipv4; this line is default and implied
+server_name trac.example.com;
 
-    access_log /var/log/nginx/trac.access_log main;
-    error_log /var/log/nginx/trac.error_log notice;
+access_log /var/log/nginx/trac.access_log main;
+error_log /var/log/nginx/trac.error_log notice;
 
-    # (Or ``^/some/prefix/(.*)``.
-    if ($uri ~ ^/(.*)) {
-            set $path_info /$1;
-    }
+# (Or ``^/some/prefix/(.*)``.
+if ($uri ~ ^/(.*)) {
+    set $path_info /$1;
+}
 
-    # it makes sense to serve static resources through Nginx
-    location ~ /(.*?)/chrome/ {
-            rewrite /(.*?)/chrome/(.*) /$1/$2 break;
-            root /var/www/trac/htdocs;
-            access_log        off;
-            expires           max;
-    }
+# it makes sense to serve static resources through Nginx
+location ~ /(.*?)/chrome/ {
+    rewrite /(.*?)/chrome/(.*) /$1/$2 break;
+    root /var/www/trac/htdocs;
+    access_log        off;
+    expires           max;
+}
 
-    location / {
-            fastcgi_pass localhost:8000;
-            include fastcgi_params;
-            fastcgi_param  SCRIPT_NAME        "";
-            fastcgi_param  PATH_INFO          $path_info;
-    }
+location / {
+    fastcgi_pass localhost:8000;
+    include fastcgi_params;
+    fastcgi_param  SCRIPT_NAME        "";
+    fastcgi_param  PATH_INFO          $path_info;
+}
 </code></pre>
 
 <p>}
@@ -138,13 +141,13 @@ server {</p>
 
 <p>```</p>
 
-<pre><code>    # it makes sense to serve static resources through Nginx
-    location ~ /chrome/ {
-            rewrite /chrome/(.*) /$1 break;
-            root /var/www/trac/htdocs;
-            access_log        off;
-            expires           max;
-    }
+<pre><code># it makes sense to serve static resources through Nginx
+location ~ /chrome/ {
+    rewrite /chrome/(.*) /$1 break;
+    root /var/www/trac/htdocs;
+    access_log        off;
+    expires           max;
+}
 </code></pre>
 
 <p>```</p>
@@ -169,7 +172,7 @@ server {</p>
 
 <blockquote><p>mount: wrong fs type, bad option, bad superblock on /dev/md126,
 missing codepage or helper program, or other error
-In some cases useful info is found in syslog - try
+In some cases useful info is found in syslog &ndash; try
 dmesg | tail or so</p></blockquote>
 
 <p>用testdisk查看分区表：</p>
@@ -267,7 +270,7 @@ mdadm - v3.2.5 - 18th May 2012
 <ul>
 <li>mdadm可以使用其他电脑的磁盘进行恢复。</li>
 <li>dmraid有时无法正确识别大硬盘(3TB imsm raid1被识别为746GB)。</li>
-<li><em>不断添加中...</em></li>
+<li><em>不断添加中&hellip;</em></li>
 </ul>
 
 

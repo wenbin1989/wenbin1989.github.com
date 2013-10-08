@@ -4,7 +4,7 @@
   <title><![CDATA[Category: libjpeg | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/libjpeg/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -35,7 +35,7 @@
 <p>定义错误处理结构体：
 ``` c
 struct my_error_mgr {
-  struct jpeg_error_mgr pub;    /<em> "public" fields </em>/</p>
+  struct jpeg_error_mgr pub;    /<em> &ldquo;public&rdquo; fields </em>/</p>
 
 <p>  jmp_buf setjmp_buffer;    /<em> for return to caller </em>/
 };</p>
@@ -78,7 +78,7 @@ read_JPEG_file (char * filename)
 <p>  /<em> In this example we want to open the input file before doing anything else,
    * so that the setjmp() error recovery below can assume the file is open.
    </em>/
-  if ((infile = fopen(filename, "rb")) == NULL) {</p>
+  if ((infile = fopen(filename, &ldquo;rb&rdquo;)) == NULL) {</p>
 
 <pre><code>fprintf(stderr, "can't open %s\n", filename);
 return 0;
@@ -102,9 +102,9 @@ return 0;
 
 <p>  }</p>
 
-<p>  /<em> ...
+<p>  /<em> &hellip;
    * 读取数据
-   * ...
+   * &hellip;
    </em>/</p>
 
 <p>  /<em> This is an important step since it will release a good deal of memory. </em>/
@@ -195,7 +195,7 @@ ERREXIT1(cinfo, JERR_BAD_STATE, cinfo-&gt;global_state);
 例如，解压下图时，调用jpeg_finish_decompress()之前完全正常，但调用jpeg_finish_decompress()时会产生错误：
 <em>Invalid JPEG file structure: two SOI markers</em></p>
 
-<p><img src="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg"></p>
+<p><img class="<a" src="href="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg">https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg</a>"></p>
 
 <p>直觉上，如果在调用jpeg_finish_decompress()之前未发生错误，则直接利用所读取的图片数据用于显示等操作即可，
 不必理会jpeg_finish_decompress()中可能产生的错误，进一步，甚至可能不必调用jpeg_finish_decompress()函数。

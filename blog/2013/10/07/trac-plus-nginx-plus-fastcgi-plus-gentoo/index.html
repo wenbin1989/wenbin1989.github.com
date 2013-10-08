@@ -101,7 +101,8 @@
 
 <time datetime="2013-10-07T23:14:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2013</time>
         
-         | <a href="#disqus_thread">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com">Comments</a>
         
       </p>
     
@@ -147,7 +148,10 @@
 </ul>
 
 
-<p>由于使用tracd配置最为便捷，其他人提到的又相对较少，所以本文主要介绍后者。</p>
+<p>由于使用tracd配置最为便捷，其他人提及的又相对较少，所以本文主要介绍后者。</p>
+
+<!-- more -->
+
 
 <p>运行</p>
 
@@ -219,31 +223,31 @@
 <span class='line-number'>26</span>
 <span class='line-number'>27</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>server {
-</span><span class='line'>        listen   80; ## listen for ipv4; this line is default and implied
-</span><span class='line'>        server_name trac.example.com;
+</span><span class='line'>  listen   80; ## listen for ipv4; this line is default and implied
+</span><span class='line'>  server_name trac.example.com;
 </span><span class='line'>
-</span><span class='line'>        access_log /var/log/nginx/trac.access_log main;
-</span><span class='line'>        error_log /var/log/nginx/trac.error_log notice;
+</span><span class='line'>  access_log /var/log/nginx/trac.access_log main;
+</span><span class='line'>  error_log /var/log/nginx/trac.error_log notice;
 </span><span class='line'>
-</span><span class='line'>        # (Or ``^/some/prefix/(.*)``.
-</span><span class='line'>        if ($uri ~ ^/(.*)) {
-</span><span class='line'>                set $path_info /$1;
-</span><span class='line'>        }
+</span><span class='line'>  # (Or ``^/some/prefix/(.*)``.
+</span><span class='line'>  if ($uri ~ ^/(.*)) {
+</span><span class='line'>      set $path_info /$1;
+</span><span class='line'>  }
 </span><span class='line'>
-</span><span class='line'>        # it makes sense to serve static resources through Nginx
-</span><span class='line'>        location ~ /(.*?)/chrome/ {
-</span><span class='line'>                rewrite /(.*?)/chrome/(.*) /$1/$2 break;
-</span><span class='line'>                root /var/www/trac/htdocs;
-</span><span class='line'>                access_log        off;
-</span><span class='line'>                expires           max;
-</span><span class='line'>        }
+</span><span class='line'>  # it makes sense to serve static resources through Nginx
+</span><span class='line'>  location ~ /(.*?)/chrome/ {
+</span><span class='line'>      rewrite /(.*?)/chrome/(.*) /$1/$2 break;
+</span><span class='line'>      root /var/www/trac/htdocs;
+</span><span class='line'>      access_log        off;
+</span><span class='line'>      expires           max;
+</span><span class='line'>  }
 </span><span class='line'>
-</span><span class='line'>        location / {
-</span><span class='line'>                fastcgi_pass localhost:8000;
-</span><span class='line'>                include fastcgi_params;
-</span><span class='line'>                fastcgi_param  SCRIPT_NAME        "";
-</span><span class='line'>                fastcgi_param  PATH_INFO          $path_info;
-</span><span class='line'>        }
+</span><span class='line'>  location / {
+</span><span class='line'>      fastcgi_pass localhost:8000;
+</span><span class='line'>      include fastcgi_params;
+</span><span class='line'>      fastcgi_param  SCRIPT_NAME        "";
+</span><span class='line'>      fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>  }
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
@@ -256,13 +260,13 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>    # it makes sense to serve static resources through Nginx
-</span><span class='line'>    location ~ /chrome/ {
-</span><span class='line'>            rewrite /chrome/(.*) /$1 break;
-</span><span class='line'>            root /var/www/trac/htdocs;
-</span><span class='line'>            access_log        off;
-</span><span class='line'>            expires           max;
-</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'># it makes sense to serve static resources through Nginx
+</span><span class='line'>location ~ /chrome/ {
+</span><span class='line'>  rewrite /chrome/(.*) /$1 break;
+</span><span class='line'>  root /var/www/trac/htdocs;
+</span><span class='line'>  access_log        off;
+</span><span class='line'>  expires           max;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
 <p>重启nginx，部署完成。</p>
@@ -310,9 +314,9 @@
       <span class="jiathis_txt">分享到：</span>
       <a class="jiathis_button_tsina">新浪微博</a>
       <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_twitter">Twitter</a>
+      <a class="jiathis_button_fb">Facebook</a>
       <a class="jiathis_button_renren">人人网</a>
-      <a class="jiathis_button_qzone">QQ空间</a>
-      <a class="jiathis_button_tqq">腾讯微博</a>
       <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
       <a class="jiathis_counter_style"></a>
     </div>
@@ -350,19 +354,19 @@
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">gentoo下使用nginx+fastcgi部署trac</a>
+        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
+        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Intel主板raid1灾难恢复小计</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Linux之主板raid(fake Raid): Dmraid or Mdadm</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a>
       </li>
     
       <li class="post">
@@ -433,7 +437,7 @@
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>

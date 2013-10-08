@@ -104,7 +104,8 @@
 
 <time datetime="2013-10-07T23:14:00+08:00" pubdate data-updated="true">Oct 7<span>th</span>, 2013</time>
         
-         | <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/#disqus_thread">Comments</a>
+           | <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Comments</a>
         
       </p>
     
@@ -150,127 +151,14 @@
 </ul>
 
 
-<p>由于使用tracd配置最为便捷，其他人提到的又相对较少，所以本文主要介绍后者。</p>
+<p>由于使用tracd配置最为便捷，其他人提及的又相对较少，所以本文主要介绍后者。</p>
 
-<p>运行</p>
-
-<pre><code>tracd --protocol=fcgi /path/to/project
-</code></pre>
-
-<p>进行测试，出现以下错误：</p>
-
-<pre><code>ImportError: No module named flup.server.fcgi
-</code></pre>
-
-<p>查看错误代码，发现是因为当tracd运行协议为fcgi、scgi等时，实现依赖flup，而emeger安装trac时并没有自动安装该依赖。
-运行</p>
-
-<pre><code>emerge --ask flup
-</code></pre>
-
-<p>安装flup后，tracd正常运行，无错误发生。</p>
-
-<p>编辑tracd配置文件(<code>/etc/conf.d/tracd</code>)，修改<code>TRACD_OPTS</code>段落为:</p>
-
-<pre><code>TRACD_OPTS="--protocol=fcgi --env-parent-dir /path/to" (多项目)
-</code></pre>
-
-<p>或</p>
-
-<pre><code>TRACD_OPTS="--protocol=fcgi -s /path/to/project" (单项目)
-</code></pre>
-
-<p>更多tracd选项请运行<code>tracd --help</code>查看。</p>
-
-<p>启动tracd服务：</p>
-
-<pre><code>/etc/init.d/tracd start
-</code></pre>
-
-<p>设置tracd开机自动运行：</p>
-
-<pre><code>rc-update add tracd default
-</code></pre>
-
-<p>最后，配置nginx虚拟目录：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>server {
-</span><span class='line'>        listen   80; ## listen for ipv4; this line is default and implied
-</span><span class='line'>        server_name trac.example.com;
-</span><span class='line'>
-</span><span class='line'>        access_log /var/log/nginx/trac.access_log main;
-</span><span class='line'>        error_log /var/log/nginx/trac.error_log notice;
-</span><span class='line'>
-</span><span class='line'>        # (Or ``^/some/prefix/(.*)``.
-</span><span class='line'>        if ($uri ~ ^/(.*)) {
-</span><span class='line'>                set $path_info /$1;
-</span><span class='line'>        }
-</span><span class='line'>
-</span><span class='line'>        # it makes sense to serve static resources through Nginx
-</span><span class='line'>        location ~ /(.*?)/chrome/ {
-</span><span class='line'>                rewrite /(.*?)/chrome/(.*) /$1/$2 break;
-</span><span class='line'>                root /var/www/trac/htdocs;
-</span><span class='line'>                access_log        off;
-</span><span class='line'>                expires           max;
-</span><span class='line'>        }
-</span><span class='line'>
-</span><span class='line'>        location / {
-</span><span class='line'>                fastcgi_pass localhost:8000;
-</span><span class='line'>                include fastcgi_params;
-</span><span class='line'>                fastcgi_param  SCRIPT_NAME        "";
-</span><span class='line'>                fastcgi_param  PATH_INFO          $path_info;
-</span><span class='line'>        }
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<p>以上配置适应多项目。单项目时，chrome相关段落改为</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>    # it makes sense to serve static resources through Nginx
-</span><span class='line'>    location ~ /chrome/ {
-</span><span class='line'>            rewrite /chrome/(.*) /$1 break;
-</span><span class='line'>            root /var/www/trac/htdocs;
-</span><span class='line'>            access_log        off;
-</span><span class='line'>            expires           max;
-</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
-
-
-<p>重启nginx，部署完成。</p>
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">继续阅读 &rarr;</a>
+    </footer>
   
 
 
@@ -299,7 +187,8 @@
 
 <time datetime="2013-10-04T10:32:00+08:00" pubdate data-updated="true">Oct 4<span>th</span>, 2013</time>
         
-         | <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/#disqus_thread">Comments</a>
+           | <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Comments</a>
         
       </p>
     
@@ -317,7 +206,7 @@
 
 <blockquote><p>mount: wrong fs type, bad option, bad superblock on /dev/md126,
 missing codepage or helper program, or other error
-In some cases useful info is found in syslog - try
+In some cases useful info is found in syslog &ndash; try
 dmesg | tail or so</p></blockquote>
 
 <p>用testdisk查看分区表：</p>
@@ -380,7 +269,8 @@ Abort &lt;y>?</p></blockquote>
 
 <time datetime="2012-12-19T16:40:00+08:00" pubdate data-updated="true">Dec 19<span>th</span>, 2012</time>
         
-         | <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/#disqus_thread">Comments</a>
+           | <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Comments</a>
         
       </p>
     
@@ -439,7 +329,8 @@ Abort &lt;y>?</p></blockquote>
 
 <time datetime="2012-11-09T19:54:00+08:00" pubdate data-updated="true">Nov 9<span>th</span>, 2012</time>
         
-         | <a href="/blog/2012/11/09/chartboost-x-new-released/#disqus_thread">Comments</a>
+           | <a href="/blog/2012/11/09/chartboost-x-new-released/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released/">Comments</a>
         
       </p>
     
@@ -448,7 +339,7 @@ Abort &lt;y>?</p></blockquote>
 
   <div class="entry-content"><p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
 
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
+<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_&ndash;! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
 
 <p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
 最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
@@ -486,7 +377,8 @@ Abort &lt;y>?</p></blockquote>
 
 <time datetime="2012-11-05T19:08:00+08:00" pubdate data-updated="true">Nov 5<span>th</span>, 2012</time>
         
-         | <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/#disqus_thread">Comments</a>
+           | <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2012/11/05/add-jiathis-to-octopress-blog/">Comments</a>
         
       </p>
     
@@ -587,7 +479,8 @@ Abort &lt;y>?</p></blockquote>
 
 <time datetime="2012-11-02T16:34:00+08:00" pubdate data-updated="true">Nov 2<span>nd</span>, 2012</time>
         
-         | <a href="/blog/2012/11/02/macvim-cpu-stuck/#disqus_thread">Comments</a>
+           | <a href="/blog/2012/11/02/macvim-cpu-stuck/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2012/11/02/macvim-cpu-stuck/">Comments</a>
         
       </p>
     
@@ -612,7 +505,7 @@ google搜索无果，自行研究，过程如下：</p>
 则打开语法高亮后，大段中文也不会造成卡顿，至此问题解决。</p>
 
 <p>虽然去掉<em>Use Core Text renderer</em>选项后，渲染效果变差一点点，无法使用透明效果，偶尔出现残像，但总比没有语法高亮强。
-Sigh&#8230;</p>
+Sigh&hellip;</p>
 </div>
   
   
@@ -643,7 +536,8 @@ Sigh&#8230;</p>
 
 <time datetime="2012-11-01T22:48:00+08:00" pubdate data-updated="true">Nov 1<span>st</span>, 2012</time>
         
-         | <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/#disqus_thread">Comments</a>
+           | <a href="/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2012/11/01/libjpeg-errors-when-decompress-broken-image/">Comments</a>
         
       </p>
     
@@ -745,19 +639,19 @@ Sigh&#8230;</p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">gentoo下使用nginx+fastcgi部署trac</a>
+        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
+        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Intel主板raid1灾难恢复小计</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Linux之主板raid(fake Raid): Dmraid or Mdadm</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a>
       </li>
     
       <li class="post">
@@ -824,7 +718,7 @@ Sigh&#8230;</p>
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>

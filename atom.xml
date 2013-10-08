@@ -4,7 +4,7 @@
   <title><![CDATA[技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -57,7 +57,10 @@
 </ul>
 
 
-<p>由于使用tracd配置最为便捷，其他人提到的又相对较少，所以本文主要介绍后者。</p>
+<p>由于使用tracd配置最为便捷，其他人提及的又相对较少，所以本文主要介绍后者。</p>
+
+<!-- more -->
+
 
 <p>运行</p>
 
@@ -129,31 +132,31 @@
 <span class='line-number'>26</span>
 <span class='line-number'>27</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>server {
-</span><span class='line'>        listen   80; ## listen for ipv4; this line is default and implied
-</span><span class='line'>        server_name trac.example.com;
+</span><span class='line'>  listen   80; ## listen for ipv4; this line is default and implied
+</span><span class='line'>  server_name trac.example.com;
 </span><span class='line'>
-</span><span class='line'>        access_log /var/log/nginx/trac.access_log main;
-</span><span class='line'>        error_log /var/log/nginx/trac.error_log notice;
+</span><span class='line'>  access_log /var/log/nginx/trac.access_log main;
+</span><span class='line'>  error_log /var/log/nginx/trac.error_log notice;
 </span><span class='line'>
-</span><span class='line'>        # (Or ``^/some/prefix/(.*)``.
-</span><span class='line'>        if ($uri ~ ^/(.*)) {
-</span><span class='line'>                set $path_info /$1;
-</span><span class='line'>        }
+</span><span class='line'>  # (Or ``^/some/prefix/(.*)``.
+</span><span class='line'>  if ($uri ~ ^/(.*)) {
+</span><span class='line'>      set $path_info /$1;
+</span><span class='line'>  }
 </span><span class='line'>
-</span><span class='line'>        # it makes sense to serve static resources through Nginx
-</span><span class='line'>        location ~ /(.*?)/chrome/ {
-</span><span class='line'>                rewrite /(.*?)/chrome/(.*) /$1/$2 break;
-</span><span class='line'>                root /var/www/trac/htdocs;
-</span><span class='line'>                access_log        off;
-</span><span class='line'>                expires           max;
-</span><span class='line'>        }
+</span><span class='line'>  # it makes sense to serve static resources through Nginx
+</span><span class='line'>  location ~ /(.*?)/chrome/ {
+</span><span class='line'>      rewrite /(.*?)/chrome/(.*) /$1/$2 break;
+</span><span class='line'>      root /var/www/trac/htdocs;
+</span><span class='line'>      access_log        off;
+</span><span class='line'>      expires           max;
+</span><span class='line'>  }
 </span><span class='line'>
-</span><span class='line'>        location / {
-</span><span class='line'>                fastcgi_pass localhost:8000;
-</span><span class='line'>                include fastcgi_params;
-</span><span class='line'>                fastcgi_param  SCRIPT_NAME        "";
-</span><span class='line'>                fastcgi_param  PATH_INFO          $path_info;
-</span><span class='line'>        }
+</span><span class='line'>  location / {
+</span><span class='line'>      fastcgi_pass localhost:8000;
+</span><span class='line'>      include fastcgi_params;
+</span><span class='line'>      fastcgi_param  SCRIPT_NAME        "";
+</span><span class='line'>      fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>  }
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
@@ -166,13 +169,13 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>    # it makes sense to serve static resources through Nginx
-</span><span class='line'>    location ~ /chrome/ {
-</span><span class='line'>            rewrite /chrome/(.*) /$1 break;
-</span><span class='line'>            root /var/www/trac/htdocs;
-</span><span class='line'>            access_log        off;
-</span><span class='line'>            expires           max;
-</span><span class='line'>    }</span></code></pre></td></tr></table></div></figure>
+</pre></td><td class='code'><pre><code class=''><span class='line'># it makes sense to serve static resources through Nginx
+</span><span class='line'>location ~ /chrome/ {
+</span><span class='line'>  rewrite /chrome/(.*) /$1 break;
+</span><span class='line'>  root /var/www/trac/htdocs;
+</span><span class='line'>  access_log        off;
+</span><span class='line'>  expires           max;
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
 <p>重启nginx，部署完成。</p>
@@ -195,7 +198,7 @@
 
 <blockquote><p>mount: wrong fs type, bad option, bad superblock on /dev/md126,
 missing codepage or helper program, or other error
-In some cases useful info is found in syslog - try
+In some cases useful info is found in syslog &ndash; try
 dmesg | tail or so</p></blockquote>
 
 <p>用testdisk查看分区表：</p>
@@ -301,7 +304,7 @@ Abort &lt;y>?</p></blockquote>
 <ul>
 <li>mdadm可以使用其他电脑的磁盘进行恢复。</li>
 <li>dmraid有时无法正确识别大硬盘(3TB imsm raid1被识别为746GB)。</li>
-<li><em>不断添加中&#8230;</em></li>
+<li><em>不断添加中&hellip;</em></li>
 </ul>
 
 
@@ -329,7 +332,7 @@ Abort &lt;y>?</p></blockquote>
     <id>http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released</id>
     <content type="html"><![CDATA[<p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
 
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
+<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_&ndash;! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
 
 <p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
 最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
@@ -509,7 +512,7 @@ google搜索无果，自行研究，过程如下：</p>
 则打开语法高亮后，大段中文也不会造成卡顿，至此问题解决。</p>
 
 <p>虽然去掉<em>Use Core Text renderer</em>选项后，渲染效果变差一点点，无法使用透明效果，偶尔出现残像，但总比没有语法高亮强。
-Sigh&#8230;</p>
+Sigh&hellip;</p>
 ]]></content>
   </entry>
   

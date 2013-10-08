@@ -100,7 +100,8 @@
 
 <time datetime="2012-11-09T19:54:00+08:00" pubdate data-updated="true">Nov 9<span>th</span>, 2012</time>
         
-         | <a href="#disqus_thread">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com">Comments</a>
         
       </p>
     
@@ -109,7 +110,7 @@
 
 <div class="entry-content"><p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
 
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
+<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_&ndash;! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
 
 <p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
 最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
@@ -161,9 +162,9 @@
       <span class="jiathis_txt">分享到：</span>
       <a class="jiathis_button_tsina">新浪微博</a>
       <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_twitter">Twitter</a>
+      <a class="jiathis_button_fb">Facebook</a>
       <a class="jiathis_button_renren">人人网</a>
-      <a class="jiathis_button_qzone">QQ空间</a>
-      <a class="jiathis_button_tqq">腾讯微博</a>
       <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
       <a class="jiathis_counter_style"></a>
     </div>
@@ -203,19 +204,19 @@
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">gentoo下使用nginx+fastcgi部署trac</a>
+        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
+        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Intel主板raid1灾难恢复小计</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Linux之主板raid(fake Raid): Dmraid or Mdadm</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a>
       </li>
     
       <li class="post">
@@ -286,7 +287,7 @@
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C/C++ | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/c-slash-c-plus-plus/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -20,7 +20,7 @@
     <id>http://geeksavetheworld.com/blog/2012/11/09/chartboost-x-new-released</id>
     <content type="html"><![CDATA[<p>前几日团队的手游项目到了交付阶段，运营商要求在游戏中加入<a href="http://chartboost.com/">Chartboost</a>支持，以实现交叉推广。</p>
 
-<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_-! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
+<p>该平台的最大特点就是：全屏广告！让玩家欲罢不能，横竖都得点一下-_&ndash;! 虽然对用户体验有一定影响，但据说效果很好，点击率超高，捷报频频。Backflip，Crowdstar, Disney, Gameloft, Get Set Games, GREE, Kabam, Kiloo, Playfirst, Pocket Gems, TinyCo等等大厂都在使用，实乃交叉推广之必备良药。</p>
 
 <p>我们的游戏使用cocos2d-x引擎，逻辑代码由C++编写。为了在C++代码内直接调用Chartboost相关接口，本人对Chartboost提供的iOS和Android SDK做了一个简单的C++封装，方便使用。
 最近闲来无事，对相关代码加以完善整理，取名为Chartboost-x，现正式放出，以造福大众！源代码与详细说明请见：</p>
@@ -53,7 +53,7 @@
 <p>定义错误处理结构体：
 ``` c
 struct my_error_mgr {
-  struct jpeg_error_mgr pub;    /<em> "public" fields </em>/</p>
+  struct jpeg_error_mgr pub;    /<em> &ldquo;public&rdquo; fields </em>/</p>
 
 <p>  jmp_buf setjmp_buffer;    /<em> for return to caller </em>/
 };</p>
@@ -96,7 +96,7 @@ read_JPEG_file (char * filename)
 <p>  /<em> In this example we want to open the input file before doing anything else,
    * so that the setjmp() error recovery below can assume the file is open.
    </em>/
-  if ((infile = fopen(filename, "rb")) == NULL) {</p>
+  if ((infile = fopen(filename, &ldquo;rb&rdquo;)) == NULL) {</p>
 
 <pre><code>fprintf(stderr, "can't open %s\n", filename);
 return 0;
@@ -120,9 +120,9 @@ return 0;
 
 <p>  }</p>
 
-<p>  /<em> ...
+<p>  /<em> &hellip;
    * 读取数据
-   * ...
+   * &hellip;
    </em>/</p>
 
 <p>  /<em> This is an important step since it will release a good deal of memory. </em>/
@@ -213,7 +213,7 @@ ERREXIT1(cinfo, JERR_BAD_STATE, cinfo-&gt;global_state);
 例如，解压下图时，调用jpeg_finish_decompress()之前完全正常，但调用jpeg_finish_decompress()时会产生错误：
 <em>Invalid JPEG file structure: two SOI markers</em></p>
 
-<p><img src="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg"></p>
+<p><img class="<a" src="href="https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg">https://lh5.googleusercontent.com/-2fC4tAPLYzU/UJKDhHuaEOI/AAAAAAAAAHE/kHoVUrhC2-w/s800/3.jpg</a>"></p>
 
 <p>直觉上，如果在调用jpeg_finish_decompress()之前未发生错误，则直接利用所读取的图片数据用于显示等操作即可，
 不必理会jpeg_finish_decompress()中可能产生的错误，进一步，甚至可能不必调用jpeg_finish_decompress()函数。

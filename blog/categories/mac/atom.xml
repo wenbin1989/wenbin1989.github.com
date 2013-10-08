@@ -4,7 +4,7 @@
   <title><![CDATA[Category: mac | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/mac/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -36,7 +36,7 @@ google搜索无果，自行研究，过程如下：</p>
 则打开语法高亮后，大段中文也不会造成卡顿，至此问题解决。</p>
 
 <p>虽然去掉<em>Use Core Text renderer</em>选项后，渲染效果变差一点点，无法使用透明效果，偶尔出现残像，但总比没有语法高亮强。
-Sigh...</p>
+Sigh&hellip;</p>
 ]]></content>
   </entry>
   

@@ -100,7 +100,8 @@
 
 <time datetime="2012-11-02T16:34:00+08:00" pubdate data-updated="true">Nov 2<span>nd</span>, 2012</time>
         
-         | <a href="#disqus_thread">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com">Comments</a>
         
       </p>
     
@@ -125,7 +126,7 @@ google搜索无果，自行研究，过程如下：</p>
 则打开语法高亮后，大段中文也不会造成卡顿，至此问题解决。</p>
 
 <p>虽然去掉<em>Use Core Text renderer</em>选项后，渲染效果变差一点点，无法使用透明效果，偶尔出现残像，但总比没有语法高亮强。
-Sigh&#8230;</p>
+Sigh&hellip;</p>
 </div>
 
 
@@ -170,9 +171,9 @@ Sigh&#8230;</p>
       <span class="jiathis_txt">分享到：</span>
       <a class="jiathis_button_tsina">新浪微博</a>
       <a class="jiathis_button_googleplus">Google+</a>
+      <a class="jiathis_button_twitter">Twitter</a>
+      <a class="jiathis_button_fb">Facebook</a>
       <a class="jiathis_button_renren">人人网</a>
-      <a class="jiathis_button_qzone">QQ空间</a>
-      <a class="jiathis_button_tqq">腾讯微博</a>
       <a href="http://www.jiathis.com/share?uid=1704686" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a>
       <a class="jiathis_counter_style"></a>
     </div>
@@ -212,19 +213,19 @@ Sigh&#8230;</p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">gentoo下使用nginx+fastcgi部署trac</a>
+        <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">intel主板raid1灾难恢复小计</a>
+        <a href="/blog/2013/10/04/intel-fake-raid1-disaster-recovery/">Intel主板raid1灾难恢复小计</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">linux之主板raid(fake raid): dmraid or mdadm</a>
+        <a href="/blog/2012/12/19/fake-raid-on-linux-dmraid-or-mdadm/">Linux之主板raid(fake Raid): Dmraid or Mdadm</a>
       </li>
     
       <li class="post">
-        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ wrapper of Chartboost for cocos2d-x</a>
+        <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a>
       </li>
     
       <li class="post">
@@ -295,7 +296,7 @@ Sigh&#8230;</p>
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      dsq.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + disqus_shortname + '.disqus.com/' + disqus_script;
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>

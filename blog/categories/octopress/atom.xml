@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-08T12:51:31+08:00</updated>
+  <updated>2013-10-08T13:35:16+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -75,7 +75,7 @@
 实现代码在<code>source/javascripts/octopress.js</code>中的<code>wrapFlashVideos()</code>函数：
 ``` js
 function wrapFlashVideos() {
-  $('object').each(function(object) {</p>
+  $(&lsquo;object&rsquo;).each(function(object) {</p>
 
 <pre><code>object = $(object);
 if ( $('param[name=movie]', object).length ) {
@@ -85,7 +85,7 @@ if ( $('param[name=movie]', object).length ) {
 </code></pre>
 
 <p>  });
-  $('iframe[src<em>=vimeo],iframe[src</em>=youtube]').each(function(iframe) {</p>
+  $(&lsquo;iframe[src<em>=vimeo],iframe[src</em>=youtube]&rsquo;).each(function(iframe) {</p>
 
 <pre><code>iframe = $(iframe);
 var wrapper = iframe.before('&lt;div class="flash-video"&gt;&lt;div&gt;').previous();
@@ -100,7 +100,7 @@ $(wrapper).children().append(iframe);
 将<code>wrapFlashVideos()</code>函数改为以下代码即可：
 ``` js
 function wrapFlashVideos() {
-  $('object').each(function(object) {</p>
+  $(&lsquo;object&rsquo;).each(function(object) {</p>
 
 <pre><code>object = $(object);
 if (object.attr('id') != "JIATHISSWF") {
@@ -112,7 +112,7 @@ $(wrapper).children().append(object);
 </code></pre>
 
 <p>  });
-  $('iframe[src<em>=vimeo],iframe[src</em>=youtube]').each(function(iframe) {</p>
+  $(&lsquo;iframe[src<em>=vimeo],iframe[src</em>=youtube]&rsquo;).each(function(iframe) {</p>
 
 <pre><code>iframe = $(iframe);
 var wrapper = iframe.before('&lt;div class="flash-video"&gt;&lt;div&gt;').previous();

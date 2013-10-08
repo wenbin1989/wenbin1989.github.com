@@ -95,7 +95,7 @@ function wrapFlashVideos() {
   $('object').each(function(i, object) {
     if( $(object).find('param[name=movie]').length ){
       if ($(object).attr('id') != 'JIATHISSWF') {
-        $(object).wrap('<div class="flash-video">')
+	$(object).wrap('<div class="flash-video">')
       }
     }
   });
