@@ -9,8 +9,8 @@
   <meta name="author" content="wenbin wang">
 
   
-  <meta name="description" content="首先，运行 emerge --ask nginx trac 安装所需应用。 需注意确保trac的USES标记中含有fastcgi与vhosts。
-如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用， &hellip;">
+  <meta name="description" content="目前站点一般通过cookie保存登陆、认证等敏感信息，而通过xss窃取cookie，以实现窃取敏感信息、伪造用户登陆等，是一种常见的攻击方式。 防止xss的主要方法是对用户输入内容进行转义等等，可参见此雄文：
+Cross Site Scripting (XSS) Attacks: &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -80,6 +80,137 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/">在php中设置cookie为httponly来减轻xss攻击的危害</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-09T16:10:00+08:00" pubdate data-updated="true">Oct 9<span>th</span>, 2013</time>
+        
+           | <a href="/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/#disqus_thread"
+             data-disqus-identifier="http://geeksavetheworld.com/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>目前站点一般通过cookie保存登陆、认证等敏感信息，而通过xss窃取cookie，以实现窃取敏感信息、伪造用户登陆等，是一种常见的攻击方式。</p>
+
+<p>防止xss的主要方法是对用户输入内容进行转义等等，可参见此雄文：
+<a href="https://www.golemtechnologies.com/articles/prevent-xss">Cross Site Scripting (XSS) Attacks: Methodology and Prevention</a>。
+本文主要讨论在php下如何设置cookie为httponly，来最大限度的减轻xss攻击的危害，提升网站的安全性。</p>
+
+<p>httponly是微软在Internet Explorer 6 SP1中为cookie引入的一个新特性，客户端脚本无法访问具有改属性的cookie值。
+敏感cookie都应设置为httponly，减轻xss攻击的危害。</p>
+
+<p>目前所有主流浏览器都支持该特性，php从5.2.0开始引入该特性。
+只需在调用<code>setcookie</code>函数时，传入相关参数即可，如：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nx">setcookie</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="nv">$value</span><span class="p">,</span> <span class="nb">time</span><span class="p">()</span><span class="o">+</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>具体可见<a href="http://php.net/manual/en/function.setcookie.php">php文档</a>。</p>
+
+<p>需要注意的是，销毁cookie时，<code>setcookie</code>后四个参数必须与设置cookie时严格相同，否则无法正确销毁。
+例如销毁上面设置的cookie，需调用：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nx">setcookie</span><span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nb">time</span><span class="p">()</span><span class="o">-</span><span class="mi">3600</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>还有一点特别需要注意，目前php的默认配置中，都会使用cookie来储存session id，见如下配置：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nx">session</span><span class="o">.</span><span class="nx">use_cookies</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'><span class="nx">session</span><span class="o">.</span><span class="nx">use_only_cookies</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class='line'><span class="nx">session</span><span class="o">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">PHPSESSID</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>因此，有被截获cookie中的PHPSESSID，来劫持当前登陆用户会话的风险。
+设置保存session id的PHPSESSID为httponly有两种方法。</p>
+
+<ol>
+<li>修改php.ini，设置<code>session.cookie_httponly = 1</code>；</li>
+<li>在调用<code>start_session()</code>之前调用<code>session_set_cookie_params()</code>，设置相关参数。如：</li>
+</ol>
+
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nb">session_set_cookie_params</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="k">FALSE</span><span class="p">,</span> <span class="k">TRUE</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>具体可见<a href="http://php.net/manual/en/function.session-set-cookie-params.php">php文档</a>。</p>
+
+<p>两种方法各有优缺点。方法1必须改动php.ini，在某些虚拟主机无法实现，但方便快捷，修改一次全局生效。
+方法2需要在每个<code>start_session()</code>调用，可能容易漏掉，但灵活性更强，也不用依赖配置环境。</p>
+
+<p>等用户退出等需要主动销毁session的时候，除了<code>session_destroy()</code>以外，还需要销毁cookie中的PHPSESSID。</p>
+
+<p>一般资料中介绍的方法如下</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_COOKIE</span><span class="p">[</span><span class="nb">session_name</span><span class="p">()]))</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">setcookie</span><span class="p">(</span><span class="nb">session_name</span><span class="p">(),</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="nb">time</span><span class="p">()</span> <span class="o">-</span> <span class="mi">3600</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>但如前所述，如果销毁时<code>setcookie</code>参数跟创建时不同，将无法正确销毁，用改方法基本都会失败。
+正确的做法为：</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nv">$sessionName</span> <span class="o">=</span> <span class="nb">session_name</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$sessionCookie</span> <span class="o">=</span> <span class="nb">session_get_cookie_params</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">session_destroy</span><span class="p">();</span>
+</span><span class='line'><span class="nv">$_SESSION</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$_COOKIE</span><span class="p">[</span><span class="nv">$sessionName</span><span class="p">]))</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">setcookie</span><span class="p">(</span><span class="nv">$sessionName</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="nv">$sessionCookie</span><span class="p">[</span><span class="s1">&#39;lifetime&#39;</span><span class="p">],</span> <span class="nv">$sessionCookie</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">],</span> <span class="nv">$sessionCookie</span><span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">],</span> <span class="nv">$sessionCookie</span><span class="p">[</span><span class="s1">&#39;secure&#39;</span><span class="p">]);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -632,11 +763,15 @@ Sigh&hellip;</p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (3)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (3)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/php/'>php (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/">在php中设置cookie为httponly来减轻xss攻击的危害</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/10/07/trac-plus-nginx-plus-fastcgi-plus-gentoo/">Gentoo下使用nginx+fastcgi部署trac</a>
@@ -652,10 +787,6 @@ Sigh&hellip;</p>
     
       <li class="post">
         <a href="/blog/2012/11/09/chartboost-x-new-released/">Chartboost-x新鲜出炉: C++ Wrapper of Chartboost for Cocos2d-x</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/11/05/add-jiathis-to-octopress-blog/">向Octopress添加JiaThis分享工具及冲突解决</a>
       </li>
     
   </ul>

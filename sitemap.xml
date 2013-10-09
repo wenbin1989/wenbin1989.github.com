@@ -33,12 +33,18 @@
         <lastmod>2013-10-08T13:34:06+08:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://geeksavetheworld.com/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/
+        </loc>
+        <lastmod>2013-10-09T18:09:09+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://geeksavetheworld.com/blog/archives/</loc>
-        <lastmod>2013-10-08T13:34:06+08:00</lastmod>
+        <lastmod>2013-10-09T18:09:09+08:00</lastmod>
     </url>
     <url>
         <loc>http://geeksavetheworld.com/</loc>
-        <lastmod>2013-10-08T13:33:22+08:00</lastmod>
+        <lastmod>2013-10-09T18:09:09+08:00</lastmod>
     </url>
     <url>
         <loc>http://geeksavetheworld.com/robots.txt</loc>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: php | 技术男儿裆自强]]></title>
+  <link href="http://geeksavetheworld.com/blog/categories/php/atom.xml" rel="self"/>
+  <link href="http://geeksavetheworld.com/"/>
+  <updated>2013-10-09T20:15:16+08:00</updated>
+  <id>http://geeksavetheworld.com/</id>
+  <author>
+    <name><![CDATA[wenbin wang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[在php中设置cookie为httponly来减轻xss攻击的危害]]></title>
+    <link href="http://geeksavetheworld.com/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack/"/>
+    <updated>2013-10-09T16:10:00+08:00</updated>
+    <id>http://geeksavetheworld.com/blog/2013/10/09/php-set-cookie-httponly-to-prevent-xss-attack</id>
+    <content type="html"><![CDATA[<p>目前站点一般通过cookie保存登陆、认证等敏感信息，而通过xss窃取cookie，以实现窃取敏感信息、伪造用户登陆等，是一种常见的攻击方式。</p>
+
+<p>防止xss的主要方法是对用户输入内容进行转义等等，可参见此雄文：
+<a href="https://www.golemtechnologies.com/articles/prevent-xss">Cross Site Scripting (XSS) Attacks: Methodology and Prevention</a>。
+本文主要讨论在php下如何设置cookie为httponly，来最大限度的减轻xss攻击的危害，提升网站的安全性。</p>
+
+<p>httponly是微软在Internet Explorer 6 SP1中为cookie引入的一个新特性，客户端脚本无法访问具有改属性的cookie值。
+敏感cookie都应设置为httponly，减轻xss攻击的危害。</p>
+
+<p>目前所有主流浏览器都支持该特性，php从5.2.0开始引入该特性。
+只需在调用<code>setcookie</code>函数时，传入相关参数即可，如：
+<code>php
+setcookie("key", $value, time()+60 * 60 * 24 * 10, "/", "", FALSE, TRUE);
+</code>
+具体可见<a href="http://php.net/manual/en/function.setcookie.php">php文档</a>。</p>
+
+<p>需要注意的是，销毁cookie时，<code>setcookie</code>后四个参数必须与设置cookie时严格相同，否则无法正确销毁。
+例如销毁上面设置的cookie，需调用：
+<code>php
+setcookie("key", "", time()-3600, "/", "", FALSE, TRUE);
+</code></p>
+
+<p>还有一点特别需要注意，目前php的默认配置中，都会使用cookie来储存session id，见如下配置：
+<code>
+session.use_cookies = 1
+session.use_only_cookies = 1
+session.name = PHPSESSID
+</code>
+因此，有被截获cookie中的PHPSESSID，来劫持当前登陆用户会话的风险。
+设置保存session id的PHPSESSID为httponly有两种方法。</p>
+
+<ol>
+<li>修改php.ini，设置<code>session.cookie_httponly = 1</code>；</li>
+<li>在调用<code>start_session()</code>之前调用<code>session_set_cookie_params()</code>，设置相关参数。如：
+<code>php
+session_set_cookie_params(0, "/", "", FALSE, TRUE);
+</code>
+具体可见<a href="http://php.net/manual/en/function.session-set-cookie-params.php">php文档</a>。</li>
+</ol>
+
+
+<p>两种方法各有优缺点。方法1必须改动php.ini，在某些虚拟主机无法实现，但方便快捷，修改一次全局生效。
+方法2需要在每个<code>start_session()</code>调用，可能容易漏掉，但灵活性更强，也不用依赖配置环境。</p>
+
+<p>等用户退出等需要主动销毁session的时候，除了<code>session_destroy()</code>以外，还需要销毁cookie中的PHPSESSID。</p>
+
+<p>一般资料中介绍的方法如下
+``` php
+if (isset($_COOKIE[session_name()])) {</p>
+
+<pre><code>setcookie(session_name(), '', time() - 3600);
+</code></pre>
+
+<p>}
+<code>
+但如前所述，如果销毁时`setcookie`参数跟创建时不同，将无法正确销毁，用改方法基本都会失败。
+正确的做法为：
+</code> php
+$sessionName = session_name();
+$sessionCookie = session_get_cookie_params();</p>
+
+<p>session_destroy();
+$_SESSION = array();</p>
+
+<p>if (isset($_COOKIE[$sessionName])) {</p>
+
+<pre><code>setcookie($sessionName, false, $sessionCookie['lifetime'], $sessionCookie['path'], $sessionCookie['domain'], $sessionCookie['secure']);
+</code></pre>
+
+<p>}
+```</p>
+]]></content>
+  </entry>
+  
+</feed>
