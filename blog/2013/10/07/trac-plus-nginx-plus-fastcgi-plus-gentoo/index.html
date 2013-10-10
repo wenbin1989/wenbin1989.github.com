@@ -11,7 +11,7 @@
   
   <meta name="description" content="首先，运行 emerge --ask nginx trac 安装所需应用。 需注意确保trac的USES标记中含有fastcgi与vhosts。
 如果没有vhosts，trac安装完成后会自动调用webapp-config在localhost虚拟目录下创建trac应用， &hellip;">
-  <meta name="keywords" content="gentoo nginx trac fastcgi tracd flup">
+  <meta name="keywords" content="gentoo nginx trac fastcgi tracd flup 中文">
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
@@ -133,7 +133,7 @@
 <p>按提示创建trac环境。
 详细介绍及trac环境的目录结构见<a href="http://trac.edgewall.org/wiki/TracEnvironment">wiki</a>。</p>
 
-<p>发布静态资源</p>
+<p>发布静态资源，以便通过nginx直接提供，提高效率：</p>
 
 <pre><code>trac-admin /path/to/project deploy /var/www/trac
 </code></pre>
@@ -222,6 +222,11 @@
 <span class='line-number'>25</span>
 <span class='line-number'>26</span>
 <span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>server {
 </span><span class='line'>  listen   80; ## listen for ipv4; this line is default and implied
 </span><span class='line'>  server_name trac.example.com;
@@ -229,11 +234,16 @@
 </span><span class='line'>  access_log /var/log/nginx/trac.access_log main;
 </span><span class='line'>  error_log /var/log/nginx/trac.error_log notice;
 </span><span class='line'>
-</span><span class='line'>  # (Or ``^/some/prefix/(.*)``.
-</span><span class='line'>  if ($uri ~ ^/(.*)) {
-</span><span class='line'>      set $path_info /$1;
+</span><span class='line'>  # 单项目静态资源配置，多项目环境只需下一段
+</span><span class='line'>  # it makes sense to serve static resources through Nginx
+</span><span class='line'>  location ~ /chrome/ {
+</span><span class='line'>      rewrite /chrome/(.*) /$1 break;
+</span><span class='line'>      root /var/www/trac/htdocs;
+</span><span class='line'>      access_log        off;
+</span><span class='line'>      expires           max;
 </span><span class='line'>  }
 </span><span class='line'>
+</span><span class='line'>  # 多项目静态资源配置，单项目环境只需上一段
 </span><span class='line'>  # it makes sense to serve static resources through Nginx
 </span><span class='line'>  location ~ /(.*?)/chrome/ {
 </span><span class='line'>      rewrite /(.*?)/chrome/(.*) /$1/$2 break;
@@ -246,12 +256,12 @@
 </span><span class='line'>      fastcgi_pass localhost:8000;
 </span><span class='line'>      include fastcgi_params;
 </span><span class='line'>      fastcgi_param  SCRIPT_NAME        "";
-</span><span class='line'>      fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>      fastcgi_param  PATH_INFO          $fastcgi_script_name;
 </span><span class='line'>  }
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
 
-<p>以上配置适应多项目。单项目时，chrome相关段落改为</p>
+<p>注意，trac官方wiki中的配置方法为：</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -260,14 +270,31 @@
 <span class='line-number'>5</span>
 <span class='line-number'>6</span>
 <span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'># it makes sense to serve static resources through Nginx
-</span><span class='line'>location ~ /chrome/ {
-</span><span class='line'>  rewrite /chrome/(.*) /$1 break;
-</span><span class='line'>  root /var/www/trac/htdocs;
-</span><span class='line'>  access_log        off;
-</span><span class='line'>  expires           max;
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>server {
+</span><span class='line'>  ...
+</span><span class='line'>  # (Or ``^/some/prefix/(.*)``.
+</span><span class='line'>  if ($uri ~ ^/(.*)) {
+</span><span class='line'>      set $path_info /$1;
+</span><span class='line'>  }
+</span><span class='line'>  ...
+</span><span class='line'>  location / {
+</span><span class='line'>      fastcgi_pass localhost:8000;
+</span><span class='line'>      include fastcgi_params;
+</span><span class='line'>      fastcgi_param  SCRIPT_NAME        "";
+</span><span class='line'>      fastcgi_param  PATH_INFO          $path_info;
+</span><span class='line'>  }
 </span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
 
+
+<p>正常情况下nginx在传递请求参数时会做url encode，但该段配置用正则表达式匹配请求参数，从而使变量$1、即$path_info不会被encode。
+这种情况下，请求中存在中文的资源会无法正确解析，PATH_INFO设置为$fastcgi_script_name则表现正常。</p>
 
 <p>重启nginx，部署完成。</p>
 </div>
@@ -297,7 +324,7 @@
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/linux/'>linux</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>, <a class='category' href='/blog/categories/nginx/'>nginx</a>
   
 </span>
 
@@ -349,7 +376,7 @@
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (3)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/php/'>php (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/c-slash-c-plus-plus/'>C/C++ (2)</a></li><li><a href='/blog/categories/cocos2d-x/'>cocos2d-x (1)</a></li><li><a href='/blog/categories/libjpeg/'>libjpeg (1)</a></li><li><a href='/blog/categories/linux/'>linux (3)</a></li><li><a href='/blog/categories/mac/'>mac (1)</a></li><li><a href='/blog/categories/nginx/'>nginx (1)</a></li><li><a href='/blog/categories/octopress/'>Octopress (1)</a></li><li><a href='/blog/categories/php/'>php (1)</a></li><li><a href='/blog/categories/vim/'>vim (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>

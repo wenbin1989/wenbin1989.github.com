@@ -4,7 +4,7 @@
   <title><![CDATA[Category: linux | 技术男儿裆自强]]></title>
   <link href="http://geeksavetheworld.com/blog/categories/linux/atom.xml" rel="self"/>
   <link href="http://geeksavetheworld.com/"/>
-  <updated>2013-10-09T20:15:16+08:00</updated>
+  <updated>2013-10-10T17:22:47+08:00</updated>
   <id>http://geeksavetheworld.com/</id>
   <author>
     <name><![CDATA[wenbin wang]]></name>
@@ -42,7 +42,7 @@
 <p>按提示创建trac环境。
 详细介绍及trac环境的目录结构见<a href="http://trac.edgewall.org/wiki/TracEnvironment">wiki</a>。</p>
 
-<p>发布静态资源</p>
+<p>发布静态资源，以便通过nginx直接提供，提高效率：</p>
 
 <pre><code>trac-admin /path/to/project deploy /var/www/trac
 </code></pre>
@@ -113,11 +113,16 @@ server_name trac.example.com;
 access_log /var/log/nginx/trac.access_log main;
 error_log /var/log/nginx/trac.error_log notice;
 
-# (Or ``^/some/prefix/(.*)``.
-if ($uri ~ ^/(.*)) {
-    set $path_info /$1;
+# 单项目静态资源配置，多项目环境只需下一段
+# it makes sense to serve static resources through Nginx
+location ~ /chrome/ {
+    rewrite /chrome/(.*) /$1 break;
+    root /var/www/trac/htdocs;
+    access_log        off;
+    expires           max;
 }
 
+# 多项目静态资源配置，单项目环境只需上一段
 # it makes sense to serve static resources through Nginx
 location ~ /(.*?)/chrome/ {
     rewrite /(.*?)/chrome/(.*) /$1/$2 break;
@@ -130,27 +135,35 @@ location / {
     fastcgi_pass localhost:8000;
     include fastcgi_params;
     fastcgi_param  SCRIPT_NAME        "";
-    fastcgi_param  PATH_INFO          $path_info;
+    fastcgi_param  PATH_INFO          $fastcgi_script_name;
 }
 </code></pre>
 
 <p>}
 ```</p>
 
-<p>以上配置适应多项目。单项目时，chrome相关段落改为</p>
+<p>注意，trac官方wiki中的配置方法为：
+```
+server {</p>
 
-<p>```</p>
-
-<pre><code># it makes sense to serve static resources through Nginx
-location ~ /chrome/ {
-    rewrite /chrome/(.*) /$1 break;
-    root /var/www/trac/htdocs;
-    access_log        off;
-    expires           max;
+<pre><code>...
+# (Or ``^/some/prefix/(.*)``.
+if ($uri ~ ^/(.*)) {
+    set $path_info /$1;
+}
+...
+location / {
+    fastcgi_pass localhost:8000;
+    include fastcgi_params;
+    fastcgi_param  SCRIPT_NAME        "";
+    fastcgi_param  PATH_INFO          $path_info;
 }
 </code></pre>
 
-<p>```</p>
+<p>}
+```
+正常情况下nginx在传递请求参数时会做url encode，但该段配置用正则表达式匹配请求参数，从而使变量$1、即$path_info不会被encode。
+这种情况下，请求中存在中文的资源会无法正确解析，PATH_INFO设置为$fastcgi_script_name则表现正常。</p>
 
 <p>重启nginx，部署完成。</p>
 ]]></content>
