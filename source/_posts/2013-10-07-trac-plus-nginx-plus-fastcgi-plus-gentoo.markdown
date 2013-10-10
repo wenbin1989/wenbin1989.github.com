@@ -3,8 +3,8 @@ layout: post
 title: "gentoo下使用nginx+fastcgi部署trac"
 date: 2013-10-07 23:14
 comments: true
-categories: linux
-keywords: gentoo nginx trac fastcgi tracd flup
+categories: linux nginx
+keywords: gentoo nginx trac fastcgi tracd flup 中文
 description:
 ---
 
@@ -23,7 +23,7 @@ description:
 按提示创建trac环境。
 详细介绍及trac环境的目录结构见[wiki](http://trac.edgewall.org/wiki/TracEnvironment)。
 
-发布静态资源
+发布静态资源，以便通过nginx直接提供，提高效率：
     trac-admin /path/to/project deploy /var/www/trac
 如配置为多项目，则需将`/var/www/trac/htdocs`下`site`与`common`目录移至`/var/www/trac/htdocs/project`下。
 
@@ -66,11 +66,16 @@ server {
 	access_log /var/log/nginx/trac.access_log main;
 	error_log /var/log/nginx/trac.error_log notice;
 
-	# (Or ``^/some/prefix/(.*)``.
-	if ($uri ~ ^/(.*)) {
-		set $path_info /$1;
+	# 单项目静态资源配置，多项目环境只需下一段
+	# it makes sense to serve static resources through Nginx
+	location ~ /chrome/ {
+		rewrite /chrome/(.*) /$1 break;
+		root /var/www/trac/htdocs;
+		access_log        off;
+		expires           max;
 	}
 
+	# 多项目静态资源配置，单项目环境只需上一段
 	# it makes sense to serve static resources through Nginx
 	location ~ /(.*?)/chrome/ {
 		rewrite /(.*?)/chrome/(.*) /$1/$2 break;
@@ -83,21 +88,29 @@ server {
 		fastcgi_pass localhost:8000;
 		include fastcgi_params;
 		fastcgi_param  SCRIPT_NAME        "";
-		fastcgi_param  PATH_INFO          $path_info;
+		fastcgi_param  PATH_INFO          $fastcgi_script_name;
 	}
 }
 ```
 
-以上配置适应多项目。单项目时，chrome相关段落改为
-
+注意，trac官方wiki中的配置方法为：
 ```
-	# it makes sense to serve static resources through Nginx
-	location ~ /chrome/ {
-		rewrite /chrome/(.*) /$1 break;
-		root /var/www/trac/htdocs;
-		access_log        off;
-		expires           max;
+server {
+	...
+	# (Or ``^/some/prefix/(.*)``.
+	if ($uri ~ ^/(.*)) {
+		set $path_info /$1;
 	}
+	...
+	location / {
+		fastcgi_pass localhost:8000;
+		include fastcgi_params;
+		fastcgi_param  SCRIPT_NAME        "";
+		fastcgi_param  PATH_INFO          $path_info;
+	}
+}
 ```
+正常情况下nginx在传递请求参数时会做url encode，但该段配置用正则表达式匹配请求参数，从而使变量$1、即$path\_info不会被encode。
+这种情况下，请求中存在中文的资源会无法正确解析，PATH\_INFO设置为$fastcgi\_script\_name则表现正常。
 
 重启nginx，部署完成。
